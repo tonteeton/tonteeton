@@ -1,0 +1,16 @@
+cache/
+Dockerfile
+docker-compose.yml
+
+**/.git
+**/.github
+**/.env
+**/.env.*
+**/.coverage
+**/.dockerignore
+**/.ropeproject
+**/.mypy_cache
+**/.pytest_cache
+**/.tox
+**/*.pyc
+**/__pycache__
