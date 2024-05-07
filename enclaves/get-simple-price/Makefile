@@ -1,10 +1,13 @@
+SRC := $(wildcard *.go)
+
+all: format test audit enclave
 
 .PHONY: test
 test:
 	 go test ./... -coverprofile=coverage.out
 
 .PHONY: tidy
-tidy:
+format:
 	go fmt ./...
 	go mod tidy -v
 
@@ -13,6 +16,9 @@ tidy:
 audit:
 	go mod verify
 	go vet ./...
+
+enclave: $(SRC) go.mod go.sum
+	go build
 
 .PHONY: clean
 clean:

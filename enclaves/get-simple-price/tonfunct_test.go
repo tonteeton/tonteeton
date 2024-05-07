@@ -1,7 +1,10 @@
-package enclave
+package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -44,4 +47,29 @@ func TestOracleResponse(t *testing.T) {
 		}
 	})
 
+}
+
+func TestSaveOracleResponseToJson(t *testing.T) {
+	os.Remove(oracleResponsePath)
+	defer func() {
+		os.Remove(oracleResponsePath)
+	}()
+
+	response := OracleResponse{
+		Signature: "signature",
+		Payload:   "payload",
+		Hash:      "hash",
+	}
+
+	err := saveOracleResponse(response)
+	if err != nil {
+		t.Errorf("Error saving OracleResponse to JSON: %v", err)
+	}
+
+	data, _ := ioutil.ReadFile(oracleResponsePath)
+	var savedResponse OracleResponse
+	err = json.Unmarshal(data, &savedResponse)
+	if err != nil {
+		t.Errorf("Error unmarshaling saved JSON data: %v", err)
+	}
 }

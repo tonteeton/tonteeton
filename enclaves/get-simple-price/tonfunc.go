@@ -1,16 +1,22 @@
-package enclave
+package main
 
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"github.com/xssnick/tonutils-go/tvm/cell"
+	"io/ioutil"
+)
+
+const (
+	oracleResponsePath = `mount/response.json`
 )
 
 type OracleResponse struct {
-	Signature string
-	Payload   string
-	Hash      string
+	Signature string `json:"signature"`
+	Payload   string `json:"payload"`
+	Hash      string `json:"hash"`
 }
 
 func buildOracleResponse(usdPrice uint64, lastUpdatedAt uint64, key ed25519.PrivateKey) (OracleResponse, error) {
@@ -40,4 +46,18 @@ func buildOracleResponse(usdPrice uint64, lastUpdatedAt uint64, key ed25519.Priv
 		base64.StdEncoding.EncodeToString(payload.ToBOC()),
 		base64.StdEncoding.EncodeToString(hash),
 	}, nil
+}
+
+func saveOracleResponse(response OracleResponse) error {
+	data, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(oracleResponsePath, data, 0600)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
