@@ -2,6 +2,7 @@ package main
 
 import (
 	"enclave/coingecko"
+	"enclave/eresp"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -22,13 +23,13 @@ func main() {
 	secretKey, _ := base64.StdEncoding.DecodeString(
 		"yMJNiUZf3kMeEkQ+0r57+Ou8DEfOKmNC/BCN9c2TfPc5PICixeaQ8vlV/79OARLthRMyTOXEVDU16/1JY3BP1Q==",
 	)
-	response, err := buildOracleResponse(31415926, 1715116956, secretKey)
+	result, err := eresp.NewEnclaveResponse(eresp.EnclavePrice{USD: 31415926, LastUpdatedAt: 1715116956}, secretKey)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	err = saveOracleResponse(response)
+	err = result.Save()
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

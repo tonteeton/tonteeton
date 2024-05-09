@@ -1,4 +1,4 @@
-package main
+package eresp
 
 import (
 	"crypto/ed25519"
@@ -7,27 +7,34 @@ import (
 	"errors"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 const (
-	oracleResponsePath = `mount/response.json`
+	EnclaveResponsePath = `mount/response.json`
 )
 
-type OracleResponse struct {
+type EnclavePrice struct {
+	USD           uint64
+	LastUpdatedAt uint64
+}
+
+type EnclaveResponse struct {
 	Signature string `json:"signature"`
 	Payload   string `json:"payload"`
 	Hash      string `json:"hash"`
 }
 
-func buildOracleResponse(usdPrice uint64, lastUpdatedAt uint64, key ed25519.PrivateKey) (OracleResponse, error) {
+func NewEnclaveResponse(price EnclavePrice, key ed25519.PrivateKey) (EnclaveResponse, error) {
 	var payload *cell.Cell
 	payload = cell.BeginCell().
-		MustStoreUInt(usdPrice, 64).
-		MustStoreUInt(lastUpdatedAt, 64).
+		MustStoreUInt(price.USD, 64).
+		MustStoreUInt(price.LastUpdatedAt, 64).
 		EndCell()
 	hash := payload.Hash()
 	if hash == nil {
-		return OracleResponse{}, errors.New("Failed to compute payload hash")
+		return EnclaveResponse{}, errors.New("Failed to compute payload hash")
 	}
 
 	var signature []byte
@@ -38,23 +45,27 @@ func buildOracleResponse(usdPrice uint64, lastUpdatedAt uint64, key ed25519.Priv
 	}()
 	signature = payload.Sign(key)
 	if signature == nil {
-		return OracleResponse{}, errors.New("Failed to sign payload hash")
+		return EnclaveResponse{}, errors.New("Failed to sign payload hash")
 	}
 
-	return OracleResponse{
+	return EnclaveResponse{
 		base64.StdEncoding.EncodeToString(signature),
 		base64.StdEncoding.EncodeToString(payload.ToBOC()),
 		base64.StdEncoding.EncodeToString(hash),
 	}, nil
 }
 
-func saveOracleResponse(response OracleResponse) error {
+func (response EnclaveResponse) Save() error {
 	data, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		return err
 	}
-
-	err = ioutil.WriteFile(oracleResponsePath, data, 0600)
+	responseDir := filepath.Dir(EnclaveResponsePath)
+	err = os.MkdirAll(responseDir, 0700)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(EnclaveResponsePath, data, 0600)
 	if err != nil {
 		return err
 	}
