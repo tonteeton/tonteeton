@@ -11,11 +11,11 @@ import (
 
 // SimplePrice represents the price information for a coin.
 type SimplePrice struct {
+	LastUpdatedAt uint64  `json:"last_updated_at"`
 	USD           float64 `json:"usd"`
 	USD24HVol     float64 `json:"usd_24h_vol"`
 	USD24HChange  float64 `json:"usd_24h_change"`
-	BTC24HChange  float64 `json:"btc_24h_change"`
-	LastUpdatedAt int     `json:"last_updated_at"`
+	BTC           float64 `json:"btc"`
 }
 
 // SimplePriceResponse represents the response from the `Coin Price by IDs` API endpoint.

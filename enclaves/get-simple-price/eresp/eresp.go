@@ -16,8 +16,12 @@ const (
 )
 
 type EnclavePrice struct {
-	USD           uint64
 	LastUpdatedAt uint64
+	Ticker        uint64
+	USD           uint64
+	USD24HVol     uint64
+	USD24HChange  int64
+	BTC           uint64
 }
 
 type EnclaveResponse struct {

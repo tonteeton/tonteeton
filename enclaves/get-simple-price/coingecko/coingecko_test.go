@@ -19,7 +19,6 @@ func parametrize[V any, T any](fn T, allValues [][]V) {
 }
 
 func TestCoingeckoFunctions(t *testing.T) {
-	t.Helper()
 	t.Run("buildURL", func(t *testing.T) {
 		testsArgs := [][]any{
 			{
