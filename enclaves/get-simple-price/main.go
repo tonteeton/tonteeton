@@ -3,16 +3,21 @@ package main
 import (
 	"enclave/coinconv"
 	"enclave/coingecko"
+	"enclave/econf"
 	"enclave/eresp"
 	"encoding/base64"
 	"fmt"
-	"os"
 )
 
 func main() {
+	cfg, err := econf.LoadConfig()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 	gecko := coingecko.NewGecko(
-		os.Getenv("COINGECKO_API_KEY"),
-		os.Getenv("COINGECKO_PRO_API_KEY"),
+		cfg.CoinGecko.DemoKey,
+		cfg.CoinGecko.ProKey,
 	)
 	fmt.Printf("%+v\n", gecko)
 	geckoPrice, err := gecko.GetTONPrice()
