@@ -10,9 +10,10 @@ import (
 )
 
 // ConvertPrice converts price data from Coingecko format to enclave response format.
-func ConvertPrice(from coingecko.SimplePrice) eresp.EnclavePrice {
+func ConvertPrice(from coingecko.SimplePrice, ticker uint64) eresp.EnclavePrice {
 	return eresp.EnclavePrice{
 		LastUpdatedAt: from.LastUpdatedAt,
+		Ticker:        ticker,
 		USD:           uint64(convertFloatValueToInt(from.USD, 2)),
 		USD24HVol:     uint64(convertFloatValueToInt(from.USD24HVol, 2)),
 		USD24HChange:  convertFloatValueToInt(from.USD24HChange, 2),
@@ -57,6 +58,10 @@ func ValidatePrice(price eresp.EnclavePrice) error {
 	if lastUpdatedAt.Before(currentTime.Add(-30*time.Minute)) ||
 		lastUpdatedAt.After(currentTime.Add(30*time.Minute)) {
 		return errors.New("LastUpdatedAt is not within the valid time range")
+	}
+
+	if price.Ticker == 0 {
+		return errors.New("Ticker is not specified")
 	}
 
 	return nil

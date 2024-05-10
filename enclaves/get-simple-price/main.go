@@ -28,7 +28,7 @@ func main() {
 	fmt.Printf("%+v\n", geckoPrice)
 
 	var price eresp.EnclavePrice
-	price = coinconv.ConvertPrice(geckoPrice.TON)
+	price = coinconv.ConvertPrice(geckoPrice.TON, cfg.Tickers.TON)
 	if err := coinconv.ValidatePrice(price); err != nil {
 		fmt.Println("Error:", err)
 		return

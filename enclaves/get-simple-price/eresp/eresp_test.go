@@ -16,8 +16,12 @@ func TestEnclaveResponse(t *testing.T) {
 		t.Errorf("Error decoding secret key: %v", err)
 	}
 	price := EnclavePrice{
-		USD:           345,
 		LastUpdatedAt: 1715092161,
+		Ticker:        0x72716023,
+		USD:           345,
+		USD24HVol:     81968225604,
+		USD24HChange:  1566,
+		BTC:           10967,
 	}
 
 	t.Run("ValidInputs", func(t *testing.T) {
@@ -26,17 +30,17 @@ func TestEnclaveResponse(t *testing.T) {
 			t.Errorf("Error building Enclave response: %v", err)
 		}
 
-		expectedPayload := "te6cckEBAQEAEgAAIAAAAAAAAAFZAAAAAGY6OsEspGH5"
+		expectedPayload := "te6cckEBAQEAMgAAYAAAAABmOjrBAAAAAHJxYCMAAAAAAAABWQAAABMVr91EAAAAAAAABh4AAAAAAAAq11siUa4="
 		if got.Payload != expectedPayload {
 			t.Errorf("Unexpected payload. Got: %s, Expected: %s", got.Payload, expectedPayload)
 		}
 
-		expectedHash := "5MMpsekXDDQw6yiY4HOu6mEV2k/YiRz5GbB6kLSgVIA="
+		expectedHash := "KWraQp7R+lYAaGw9VqJnMeKcar9q+mKtudCST/4h3GY="
 		if got.Hash != expectedHash {
 			t.Errorf("Unexpected hash. Got: %s, Expected: %s", got.Hash, expectedHash)
 		}
 
-		expectedSignature := "QxBExxLU/NQMysbB6t3sevQBdbXgl2zo//V9yWkrkXWOQQXEVTnK45cYC/O6X17NKt2FtlWzjEchxQdOPnAFDA=="
+		expectedSignature := "Id3NO8Tbq4ZFcZ1mp4gr78g7+SgmHuCdTSSBXmzXYy7u3W/UPisnTsE7CuDUATiaOFnE208w1fyb8+s6BM/0BA=="
 		if got.Signature != expectedSignature {
 			t.Errorf("Unexpected signature. Got: %s, Expected: %s", got.Signature, expectedSignature)
 		}
@@ -72,4 +76,3 @@ func TestSaveEnclaveResponseToJson(t *testing.T) {
 		t.Errorf("Error unmarshaling saved JSON data: %v", err)
 	}
 }
-

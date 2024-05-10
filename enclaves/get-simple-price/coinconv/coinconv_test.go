@@ -24,6 +24,10 @@ func TestConvertPrice(t *testing.T) {
 			eresp.EnclavePrice{USD: 1_00},
 		},
 		{
+			coingecko.SimplePrice{USD: 1},
+			eresp.EnclavePrice{USD: 1_00},
+		},
+		{
 			coingecko.SimplePrice{USD: 5.792609218137362},
 			eresp.EnclavePrice{USD: 5_79},
 		},
@@ -59,13 +63,20 @@ func TestConvertPrice(t *testing.T) {
 
 	for _, tcase := range cases {
 		t.Run(fmt.Sprintf("%+v", tcase.input), func(t *testing.T) {
-			got := ConvertPrice(tcase.input)
+			got := ConvertPrice(tcase.input, 0)
 			if got != tcase.expected {
 				t.Errorf("Unexpected: %+v,\n expected: %+v", got, tcase.expected)
 			}
 		})
 	}
 
+	t.Run("Ticker is set", func(t *testing.T) {
+		got := ConvertPrice(coingecko.SimplePrice{}, 1234)
+		if got.Ticker != 1234 {
+			t.Errorf("Ticker is not set")
+		}
+
+	})
 }
 
 func TestConvertFloatValueToInt(t *testing.T) {
@@ -96,6 +107,7 @@ func TestPriceIsValid(t *testing.T) {
 	cases := []eresp.EnclavePrice{
 		eresp.EnclavePrice{
 			LastUpdatedAt: uint64(time.Now().Unix()),
+			Ticker:        1,
 			USD:           100_09,
 			USD24HChange:  -518,
 			USD24HVol:     331_937_525_22,
@@ -129,6 +141,7 @@ func TestPriceIsInvalid(t *testing.T) {
 				LastUpdatedAt: uint64(
 					time.Now().Add(-24 * time.Hour).Unix(),
 				),
+				Ticker:       1,
 				USD:          100_09,
 				USD24HChange: -518,
 				USD24HVol:    331_937_525_22,
@@ -139,6 +152,7 @@ func TestPriceIsInvalid(t *testing.T) {
 		{
 			eresp.EnclavePrice{
 				LastUpdatedAt: now,
+				Ticker:        1,
 				USD:           0,
 				USD24HChange:  -518,
 				USD24HVol:     331_937_525_22,
@@ -149,6 +163,7 @@ func TestPriceIsInvalid(t *testing.T) {
 		{
 			eresp.EnclavePrice{
 				LastUpdatedAt: uint64(time.Now().Unix()),
+				Ticker:        1,
 				USD:           1,
 				USD24HChange:  -1e10,
 				USD24HVol:     331_937_525_22,
@@ -159,6 +174,7 @@ func TestPriceIsInvalid(t *testing.T) {
 		{
 			eresp.EnclavePrice{
 				LastUpdatedAt: uint64(time.Now().Unix()),
+				Ticker:        1,
 				USD:           1,
 				USD24HChange:  0,
 				USD24HVol:     331_937_525_22,
@@ -169,6 +185,7 @@ func TestPriceIsInvalid(t *testing.T) {
 		{
 			eresp.EnclavePrice{
 				LastUpdatedAt: now,
+				Ticker:        1,
 				USD:           1,
 				USD24HChange:  1,
 				USD24HVol:     1e19,
@@ -180,12 +197,24 @@ func TestPriceIsInvalid(t *testing.T) {
 		{
 			eresp.EnclavePrice{
 				LastUpdatedAt: now,
+				Ticker:        1,
 				USD:           1,
 				USD24HChange:  -1000,
 				USD24HVol:     1,
 				BTC:           0,
 			},
 			"BTC value",
+		},
+		{
+
+			eresp.EnclavePrice{
+				LastUpdatedAt: uint64(time.Now().Unix()),
+				USD:           100_09,
+				USD24HChange:  -518,
+				USD24HVol:     331_937_525_22,
+				BTC:           927,
+			},
+			"Ticker",
 		},
 	}
 

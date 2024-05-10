@@ -33,8 +33,12 @@ type EnclaveResponse struct {
 func NewEnclaveResponse(price EnclavePrice, key ed25519.PrivateKey) (EnclaveResponse, error) {
 	var payload *cell.Cell
 	payload = cell.BeginCell().
-		MustStoreUInt(price.USD, 64).
 		MustStoreUInt(price.LastUpdatedAt, 64).
+		MustStoreUInt(price.Ticker, 64).
+		MustStoreUInt(price.USD, 64).
+		MustStoreUInt(price.USD24HVol, 64).
+		MustStoreInt(price.USD24HChange, 64).
+		MustStoreUInt(price.BTC, 64).
 		EndCell()
 	hash := payload.Hash()
 	if hash == nil {
