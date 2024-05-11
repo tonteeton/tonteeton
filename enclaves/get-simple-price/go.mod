@@ -2,6 +2,13 @@ module enclave
 
 go 1.22.2
 
-require github.com/xssnick/tonutils-go v1.9.5
+require (
+	github.com/edgelesssys/ego v1.5.1
+	github.com/xssnick/tonutils-go v1.9.5
+)
 
-require github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
+require (
+	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
+)

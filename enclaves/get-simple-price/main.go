@@ -4,8 +4,8 @@ import (
 	"enclave/coinconv"
 	"enclave/coingecko"
 	"enclave/econf"
+	"enclave/ekeys"
 	"enclave/eresp"
-	"encoding/base64"
 	"fmt"
 )
 
@@ -35,10 +35,13 @@ func main() {
 	}
 	fmt.Printf("%+v", price)
 
-	secretKey, _ := base64.StdEncoding.DecodeString(
-		"yMJNiUZf3kMeEkQ+0r57+Ou8DEfOKmNC/BCN9c2TfPc5PICixeaQ8vlV/79OARLthRMyTOXEVDU16/1JY3BP1Q==",
-	)
-	result, err := eresp.NewEnclaveResponse(price, secretKey)
+	privateKey, err := ekeys.GetPrivateKey(cfg.Keys)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	result, err := eresp.NewEnclaveResponse(price, privateKey)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
