@@ -7,23 +7,24 @@ import (
 	"enclave/ekeys"
 	"enclave/eresp"
 	"fmt"
+	"os"
 )
 
-func main() {
+func run() error {
 	cfg, err := econf.LoadConfig()
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 	gecko := coingecko.NewGecko(
 		cfg.CoinGecko.DemoKey,
 		cfg.CoinGecko.ProKey,
 	)
-	fmt.Printf("%+v\n", gecko)
+
 	geckoPrice, err := gecko.GetTONPrice()
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 	fmt.Printf("%+v\n", geckoPrice)
 
@@ -31,24 +32,34 @@ func main() {
 	price = coinconv.ConvertPrice(geckoPrice.TON, cfg.Tickers.TON)
 	if err := coinconv.ValidatePrice(price); err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
-	fmt.Printf("%+v", price)
+	fmt.Printf("%+v\n", price)
 
 	privateKey, err := ekeys.GetPrivateKey(cfg.Keys)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	result, err := eresp.NewEnclaveResponse(price, privateKey)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
 	err = result.Save()
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
 	}
+	return nil
+}
+
+func main() {
+	exitCode := 0
+	err := run()
+	if err != nil {
+		exitCode = 1
+	}
+	os.Exit(exitCode)
 }
