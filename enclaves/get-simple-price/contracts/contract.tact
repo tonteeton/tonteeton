@@ -14,8 +14,10 @@ contract DemoContract with UsesPriceOracle {
 
     override fun receivedOraclePriceResponse(msg: OraclePriceResponse) {
         let sb: StringBuilder = beginString();
-        sb.append("New price received: ");
+        sb.append("TON to USD: ");
         sb.append(msg.usd.toString());
+        sb.append("\nTo BTC: ");
+        sb.append(msg.btc.toString());
         emit(sb.toString().asComment());
     }
 
@@ -38,47 +40,31 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
     owner: Address;
     demoAddress: Address;
     enclavePublicKey: Int as uint256;
-    lastPrice: OraclePriceResponse;
-    stopped: Bool;
+    prices: map<Int, PriceUpdate>;
+    stopped: Bool = false;
 
 
     init(publicKey: Int, owner: Address) {
         self.owner = owner;
         self.enclavePublicKey = publicKey;
-        self.lastPrice = OraclePriceResponse{
-            queryID: 0,
-            ticker: self.TICKER_TON,
-            usd: 0,
-            lastUpdatedAt: now()
-        };
         self.demoAddress = myAddress();
-        self.stopped = false;
     }
 
-  get fun price() : OraclePriceResponse {
-      return self.lastPrice;
+    get fun prices() : map<Int, PriceUpdate> {
+        return self.prices;
 
-  }
+    }
 
- get fun demoAddress() : Address {
-     return self.demoAddress;
- }
+    get fun price(ticker: Int) : PriceUpdate? {
+        return self.prices.get(ticker);
 
-  fun deployDemo() {
-      require(self.demoAddress == myAddress(), "Demo contract is already deployed");
-      let init: StateInit = initOf DemoContract(myAddress());
-      self.demoAddress = contractAddress(init);
-        send(SendParameters{
-            to: self.demoAddress,
-            value: ton("0.2"),
-            mode: SendIgnoreErrors,
-            code: init.code,
-            data: init.data,
-            body: "callOracle".asComment()
-        });
-  }
+    }
 
-  receive ("debug") {
+    get fun demoAddress() : Address {
+        return self.demoAddress;
+    }
+
+    receive ("debug") {
       if (self.demoAddress == myAddress()) {
         self.deployDemo();
         emit("Demo contract deployed".asComment());
@@ -93,39 +79,69 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
 
   }
 
-  receive ("DeployDemo") {
-      self.deployDemo();
-      emit("Demo contract deployed".asComment());
-  }
+    receive ("DeployDemo") {
+        self.deployDemo();
+        emit("Demo contract deployed".asComment());
+    }
 
     receive (msg: OraclePriceRequest) {
         emit("OraclePriceRequest".asComment());
-        let lastUpdatedAt : Int = now() - 3600;
-        if (lastUpdatedAt >= msg.minUpdatedAt) {
-            self.reply(OraclePriceResponse{
-                queryID: msg.queryID,
-                ticker: msg.ticker,
-                usd: 5704518,
-                lastUpdatedAt: lastUpdatedAt
-            }.toCell());
-        } else {
+        if (self.prices.get(msg.ticker) == null) {
             self.reply(OraclePriceScheduledResponse{
                 queryID: msg.queryID,
                 ticker: msg.ticker,
-                lastUpdatedAt: lastUpdatedAt
+                lastUpdatedAt: 0
             }.toCell());
+            emit("Unkwown ticker requested".asComment());
+        } else {
+            let price: PriceUpdate = self.prices.get(msg.ticker)!!;
+            if (price.lastUpdatedAt >= msg.minUpdatedAt) {
+                self.reply(OraclePriceResponse{
+                    queryID: msg.queryID,
+                    lastUpdatedAt: price.lastUpdatedAt,
+                    ticker: msg.ticker,
+                    usd: price.usd,
+                    usd24vol: price.usd24vol,
+                    usd24change: price.usd24change,
+                    btc: price.btc
+                }.toCell());
+            } else {
+                self.reply(OraclePriceScheduledResponse{
+                    queryID: msg.queryID,
+                    ticker: msg.ticker,
+                    lastUpdatedAt: price.lastUpdatedAt
+                }.toCell());
+                emit("Price is outdated".asComment());
+            }
         }
-        emit("price response sended".asComment());
     }
 
     receive(msg: Update) {
         let payloadHash: Int = msg.payload.toCell().hash();
         require(checkSignature(payloadHash, msg.signature, self.enclavePublicKey), "Invalid signature");
+
+        let price: PriceUpdate = msg.payload;
+        self.prices.set(price.ticker, price);
+
         emit("Update".asComment());
     }
 
     receive (text: String) {
         emit("text received".asComment());
+    }
+
+    fun deployDemo() {
+        require(self.demoAddress == myAddress(), "Demo contract is already deployed");
+        let init: StateInit = initOf DemoContract(myAddress());
+        self.demoAddress = contractAddress(init);
+        send(SendParameters{
+            to: self.demoAddress,
+            value: ton("0.2"),
+            mode: SendIgnoreErrors,
+            code: init.code,
+            data: init.data,
+            body: "callOracle".asComment()
+        });
     }
 
 }

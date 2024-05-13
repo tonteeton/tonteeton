@@ -32,10 +32,15 @@ describe("contract", () => {
     let owner: SandboxContract<TreasuryContract>;
     let sender: Sender;
     let enclaveKeyPair: KeyPair;
+    const now = Math.floor(Date.now() / 1000);
     const validPayload: PriceUpdate = {
         $$type: "PriceUpdate",
+        lastUpdatedAt: BigInt(now),
+        ticker: BigInt(0x72716023),
         usd: BigInt(345),
-        lastUpdatedAt: BigInt(1715092161),
+        usd24vol: BigInt(81968225604),
+        usd24change: BigInt(1566),
+        btc: BigInt(10967),
     };
 
     beforeEach(async () => {
@@ -83,26 +88,8 @@ describe("contract", () => {
         expect((await contract.getDemoAddress()) != contract.address);
     });
 
-    it("should deploy correctly", async () => {});
 
-    it("should respond to price request with a price response", async () => {
-        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
-        expect(res.transactions).toHaveTransaction({
-            from: client.address,
-            to: contract.address,
-            success: true,
-            op: findOp(contract, "OraclePriceRequest"),
-        });
-        expect(res.transactions).toHaveTransaction({
-            from: contract.address,
-            to: client.address,
-            success: true,
-            op: findOp(contract, "OraclePriceResponse"),
-        });
-    });
-
-    it("should handle price update from enclave", async () => {
-        let payload = validPayload;
+    async function sendUpdate(payload: PriceUpdate) {
         let hash = beginCell().store(storePriceUpdate(payload)).endCell().hash();
         let signature = sign(hash, enclaveKeyPair.secretKey);
 
@@ -134,6 +121,13 @@ describe("contract", () => {
             success: true,
             op: findOp(contract, "Update"),
         });
+    }
+
+
+    it("should deploy correctly", async () => {});
+
+    it("should handle price update from enclave", async () => {
+        await sendUpdate(validPayload);
     });
 
     it("should reject requests with wrong signature", async () => {
@@ -158,5 +152,48 @@ describe("contract", () => {
             op: findOp(contract, "Update"),
             exitCode: 48401,
         });
+    });
+
+
+    it("should respond to price request with a price response", async () => {
+        await sendUpdate(validPayload);
+
+        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        expect(res.transactions).toHaveTransaction({
+            from: client.address,
+            to: contract.address,
+            success: true,
+            op: findOp(contract, "OraclePriceRequest"),
+        });
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: client.address,
+            success: true,
+            op: findOp(contract, "OraclePriceResponse"),
+        });
+
+    });
+
+    it("should notify if available price is outdated", async () => {
+        let outdatedPrice : PriceUpdate = structuredClone(validPayload);
+        outdatedPrice.lastUpdatedAt = BigInt(now - 30 * 24 * 60 * 60);
+        console.log(validPayload);
+        console.log(outdatedPrice);
+        await sendUpdate(outdatedPrice);
+
+        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        expect(res.transactions).toHaveTransaction({
+            from: client.address,
+            to: contract.address,
+            success: true,
+            op: findOp(contract, "OraclePriceRequest"),
+        });
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: client.address,
+            success: true,
+            op: findOp(contract, "OraclePriceScheduledResponse"),
+        });
+
     });
 });

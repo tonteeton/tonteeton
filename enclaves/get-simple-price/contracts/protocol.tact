@@ -8,9 +8,12 @@ message (0xc99be573) OraclePriceRequest {
 // Message structure for receiving price response from the oracle.
 message (0x9735a9c2) OraclePriceResponse {
     queryID: Int as uint64;       // Identifier, as received from the price request.
-    ticker: Int as uint64;        // Asset.
-    usd: Int as uint64;           // Price of the asset in USD.
     lastUpdatedAt: Int as uint64; // Timestamp of the last update of price data.
+    ticker: Int as uint64;        // Asset.
+    usd: Int as uint64;           // Price of the asset in USD (2 decimal places precision, cents).
+    usd24vol: Int as uint64;      // 24-hour volume in USD (cents).
+    usd24change: Int as int64;    // 24-hour change in USD (cents).
+    btc: Int as uint64;           // Price of the asset in BTC (8 decimal places precision, satoshi).
 }
 
 // Define message structure for receiving scheduled response from the oracle.
