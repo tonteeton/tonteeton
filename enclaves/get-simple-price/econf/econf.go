@@ -7,7 +7,8 @@ import (
 
 const (
 	// TON_TICKER represents the ticker ID known to the contract.
-	TON_TICKER = uint64(0x72716023)
+	TON_TICKER  = uint64(0x72716023)
+	APP_VERSION = "get-simple-price-v1r1"
 )
 
 type KeysConfig struct {
@@ -25,7 +26,7 @@ type Config struct {
 	Tickers struct {
 		TON uint64
 	}
-	Keys KeysConfig
+	SignatureKeys  KeysConfig
 }
 
 // LoadConfig loads configuration from environment variables.
@@ -34,11 +35,12 @@ func LoadConfig() (*Config, error) {
 	cfg.Tickers.TON = TON_TICKER
 	cfg.CoinGecko.DemoKey = os.Getenv("COINGECKO_API_KEY")
 	cfg.CoinGecko.ProKey = os.Getenv("COINGECKO_PRO_API_KEY")
-	cfg.Keys = KeysConfig{
-		PublicKeyPath:  "mount/key.pub",
-		PrivateKeyPath: "mount/key.priv.enc",
-		SealedDatePath: "mount/created.enc",
-		Version:        "get-simple-price-v1r1",
+	cfg.SignatureKeys = KeysConfig{
+		PublicKeyPath:  "mount/signature_key.pub",
+		PrivateKeyPath: "mount/signature_key.priv.enc",
+		SealedDatePath: "mount/signature_created.enc",
+		Version:        APP_VERSION,
+	}
 	}
 	return &cfg, nil
 }

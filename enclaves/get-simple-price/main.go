@@ -4,8 +4,8 @@ import (
 	"enclave/coinconv"
 	"enclave/coingecko"
 	"enclave/econf"
-	"enclave/ekeys"
 	"enclave/eresp"
+	"enclave/esign"
 	"fmt"
 	"os"
 )
@@ -36,13 +36,13 @@ func run() error {
 	}
 	fmt.Printf("%+v\n", price)
 
-	privateKey, err := ekeys.GetPrivateKey(cfg.Keys)
+	signature, err := esign.GetSignatureKey(cfg.SignatureKeys)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return err
 	}
 
-	result, err := eresp.NewEnclaveResponse(price, privateKey)
+	result, err := eresp.NewEnclaveResponse(price, signature.GetPrivateKey())
 	if err != nil {
 		fmt.Println("Error:", err)
 		return err

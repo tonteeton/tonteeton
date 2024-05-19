@@ -1,8 +1,7 @@
-// Package ekeys provides functions for managing Ed25519 keys.
+// Package ekeys provides functions for managing keys.
 package ekeys
 
 import (
-	"crypto/ed25519"
 	"enclave/econf"
 	"encoding/base64"
 	"errors"
@@ -11,18 +10,22 @@ import (
 	"time"
 )
 
+// KeyManager is responsible for generation, encryption, storage, and retrieval
+// of keys according to the configuration.
 type KeyManager struct {
-	config econf.KeysConfig
+	Config econf.KeysConfig
 }
 
-// GetPrivateKey retrieves the private from location specified by KeysConfig.
+// KeyGenerator is a function type that generates a pair of public and private keys.
+type KeyGenerator func() (publicKey []byte, privateKey []byte, err error)
+
+// GetPrivateKey retrieves the key from location specified by KeysConfig.
 // If the private key file doesn't exist, it generates new keys and saves them.
 // If the private key file exists, it loads and returns the existing private key.
-func GetPrivateKey(config econf.KeysConfig) (ed25519.PrivateKey, error) {
-	keys := KeyManager{config}
-	if _, err := os.Stat(config.PrivateKeyPath); err != nil {
+func (keys KeyManager) GetPrivateKey(generateKey KeyGenerator) ([]byte, error) {
+	if _, err := os.Stat(keys.Config.PrivateKeyPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			if err := keys.createNewKeys(); err != nil {
+			if err := keys.createNewKeys(generateKey); err != nil {
 				return nil, err
 			}
 		} else {
@@ -32,61 +35,62 @@ func GetPrivateKey(config econf.KeysConfig) (ed25519.PrivateKey, error) {
 	return keys.loadKeys()
 }
 
-func (keys KeyManager) createNewKeys() error {
+func (keys KeyManager) createNewKeys(generateKey KeyGenerator) error {
 	publicKey, privateKey, err := generateKey()
 	if err != nil {
-		return errors.New("Failed to generate keys")
+		return errors.New("failed to generate keys")
 	}
 	creationInfo := []byte(time.Now().Format(time.RFC3339))
 
-	err = keys.writeEncryptedFile(keys.config.SealedDatePath, creationInfo)
+	err = keys.writeEncryptedFile(keys.Config.SealedDatePath, creationInfo)
 	if err != nil {
-		return errors.New("Failed to write creation info")
+		return errors.New("failed to write creation info")
 	}
 
 	err = os.WriteFile(
-		keys.config.PublicKeyPath,
+		keys.Config.PublicKeyPath,
 		[]byte(base64.StdEncoding.EncodeToString(publicKey)),
 		0600,
 	)
 	if err != nil {
-		return errors.New("Failed to write public key")
+		return errors.New("failed to write public key")
 	}
 
-	err = keys.writeEncryptedFile(keys.config.PrivateKeyPath, privateKey)
+	err = keys.writeEncryptedFile(keys.Config.PrivateKeyPath, privateKey)
 	if err != nil {
-		return errors.New("Failed to write private key")
+		return errors.New("failed to write private key")
 	}
 
 	return nil
 }
 
-func (keys KeyManager) loadKeys() (ed25519.PrivateKey, error) {
+func (keys KeyManager) loadKeys() ([]byte, error) {
 	var dateData []byte
 	var creationDate time.Time
-	dateData, err := keys.readEncryptedFile(keys.config.SealedDatePath)
+	dateData, err := keys.readEncryptedFile(keys.Config.SealedDatePath)
 	if err != nil {
-		return nil, errors.New("Failed to read creation info")
+		return nil, errors.New("failed to read creation info")
 	}
+
 	creationDate, err = time.Parse(time.RFC3339, string(dateData))
 	if err != nil {
-		return nil, errors.New("Failed to parse creation date")
+		return nil, errors.New("failed to parse creation date")
 	}
+
 	if time.Now().Before(creationDate) {
-		return nil, errors.New("Unexpected keys creation date")
+		return nil, errors.New("unexpected keys creation date")
 	}
 
-	var privateKeyData []byte
-	privateKeyData, err = keys.readEncryptedFile(keys.config.PrivateKeyPath)
+	privateKeyData, err := keys.readEncryptedFile(keys.Config.PrivateKeyPath)
 	if err != nil {
-		return nil, errors.New("Failed to read private key")
+		return nil, errors.New("failed to read private key")
 	}
 
-	return ed25519.PrivateKey(privateKeyData), nil
+	return privateKeyData, nil
 }
 
 func (keys KeyManager) readEncryptedFile(path string) ([]byte, error) {
-	additionalData := []byte(keys.config.Version)
+	additionalData := []byte(keys.Config.Version)
 
 	sealedData, err := os.ReadFile(path)
 	if err != nil {
@@ -102,7 +106,7 @@ func (keys KeyManager) readEncryptedFile(path string) ([]byte, error) {
 }
 
 func (keys KeyManager) writeEncryptedFile(path string, data []byte) error {
-	additionalData := []byte(keys.config.Version)
+	additionalData := []byte(keys.Config.Version)
 	encryptedData, err := ecrypto.SealWithUniqueKey(data, additionalData)
 	if err != nil {
 		return err
@@ -112,8 +116,4 @@ func (keys KeyManager) writeEncryptedFile(path string, data []byte) error {
 		return err
 	}
 	return err
-}
-
-func generateKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
-	return ed25519.GenerateKey(nil)
 }

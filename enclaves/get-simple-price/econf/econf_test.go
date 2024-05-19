@@ -13,8 +13,8 @@ func TestLoadConfig(t *testing.T) {
 			t.Errorf("Unexpected error: %v", err)
 		} else if cfg.Tickers.TON == 0 || cfg.CoinGecko.DemoKey != "demo" || cfg.CoinGecko.ProKey != "pro" {
 			t.Errorf("Unexpected config: %+v", cfg)
-		} else if cfg.Keys.PublicKeyPath == "" {
-			t.Errorf("Unexpected keys config: %+v", cfg.Keys)
+		} else if cfg.SignatureKeys.PublicKeyPath == "" {
+			t.Errorf("Unexpected keys config: %+v", cfg.SignatureKeys)
 		}
 	})
 }
