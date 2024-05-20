@@ -2,8 +2,8 @@ package ekeys
 
 import (
 	"bytes"
-	"enclave/econf"
 	"crypto/rand"
+	"enclave/econf"
 	"io/ioutil"
 	"os"
 	"strings"

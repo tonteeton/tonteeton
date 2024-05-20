@@ -27,6 +27,7 @@ type Config struct {
 		TON uint64
 	}
 	SignatureKeys  KeysConfig
+	EncryptionKeys KeysConfig
 }
 
 // LoadConfig loads configuration from environment variables.
@@ -41,6 +42,11 @@ func LoadConfig() (*Config, error) {
 		SealedDatePath: "mount/signature_created.enc",
 		Version:        APP_VERSION,
 	}
+	cfg.EncryptionKeys = KeysConfig{
+		PublicKeyPath:  "mount/box_key.pub",
+		PrivateKeyPath: "mount/box_key.priv.enc",
+		SealedDatePath: "mount/box_created.enc",
+		Version:        APP_VERSION,
 	}
 	return &cfg, nil
 }
