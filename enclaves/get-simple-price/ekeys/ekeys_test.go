@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"enclave/econf"
+	"github.com/edgelesssys/ego/ecrypto"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -45,7 +46,7 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("Write and read encrypted file", func(t *testing.T) {
 		setupTest(t, config)
-		err := keys.writeEncryptedFile("test.enc", []byte("testdata"))
+		err := WriteEncryptedFile("test.enc", []byte("testdata"), []byte("test"))
 		if err != nil {
 			t.Fatalf("Error: %v", err)
 		}
@@ -59,7 +60,7 @@ func TestLoadConfig(t *testing.T) {
 		}
 
 		var decrypted []byte
-		decrypted, err = keys.readEncryptedFile("test.enc")
+		decrypted, err = ReadEncryptedFile("test.enc", []byte("test"))
 		if err != nil {
 			t.Fatalf("Error: %v", err)
 		}
@@ -67,6 +68,31 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatalf("Unexpected decrypted data: '%s'", decrypted)
 		}
 
+	})
+
+	t.Run("Write and read file encrypted with a Product key", func(t *testing.T) {
+		setupTest(t, config)
+		err := WriteEncryptedFile("test.enc", []byte("testdata"), []byte("test"), ecrypto.SealWithProductKey)
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+		var data []byte
+		data, err = ioutil.ReadFile("test.enc")
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+		if strings.Contains(string(data), "testdata") {
+			t.Fatalf("Data was not encrypted: '%s'", data)
+		}
+
+		var decrypted []byte
+		decrypted, err = ReadEncryptedFile("test.enc", []byte("test"))
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+		if string(decrypted) != "testdata" {
+			t.Fatalf("Unexpected decrypted data: '%s'", decrypted)
+		}
 	})
 
 	t.Run("Create and load keys", func(t *testing.T) {
