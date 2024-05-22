@@ -37,6 +37,16 @@ func GetSignatureKey(config econf.KeysConfig) (SignatureKey, error) {
 	return SignatureKey{ed25519.PrivateKey(keyData)}, nil
 }
 
+// SaveSignatureKey saves the provided ED25519 private key to the paths specified in KeysConfig.
+func SaveSignatureKey(config econf.KeysConfig, keyData []byte) error {
+	if len(keyData) != ed25519.PrivateKeySize {
+		return fmt.Errorf("invalid keys size: %d", len(keyData))
+	}
+	key := SignatureKey{ed25519.PrivateKey(keyData)}
+	keyManager := ekeys.KeyManager{Config: config}
+	return keyManager.Save(key.GetPublicKey(), keyData)
+}
+
 // generateSignatureKey implements the ekeys.KeyGenerator function type.
 func generateSignatureKey() (public []byte, private []byte, err error) {
 	return ed25519.GenerateKey(nil)

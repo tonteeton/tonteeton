@@ -30,24 +30,25 @@ type DataSealer func(plaintext []byte, additionalData []byte) ([]byte, error)
 func (keys KeyManager) GetPrivateKey(generateKey KeyGenerator) ([]byte, error) {
 	if _, err := os.Stat(keys.Config.PrivateKeyPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			if err := keys.createNewKeys(generateKey); err != nil {
+			publicKey, privateKey, err := generateKey()
+			if err != nil {
+				return nil, errors.New("failed to generate a new key")
+			}
+			if err := keys.Save(publicKey, privateKey); err != nil {
 				return nil, err
 			}
 		} else {
 			return nil, err
 		}
 	}
-	return keys.loadKeys()
+	return keys.load()
 }
 
-func (keys KeyManager) createNewKeys(generateKey KeyGenerator) error {
-	publicKey, privateKey, err := generateKey()
-	if err != nil {
-		return errors.New("failed to generate keys")
-	}
+// Save saves the provided public and private keys to the respective paths specified in KeysConfig.
+func (keys KeyManager) Save(publicKey []byte, privateKey []byte) error {
 	creationInfo := []byte(time.Now().Format(time.RFC3339))
 
-	err = WriteEncryptedFile(keys.Config.SealedDatePath, creationInfo, keys.getAdditionalData())
+	err := WriteEncryptedFile(keys.Config.SealedDatePath, creationInfo, keys.GetAdditionalData())
 	if err != nil {
 		return errors.New("failed to write creation info")
 	}
@@ -61,7 +62,7 @@ func (keys KeyManager) createNewKeys(generateKey KeyGenerator) error {
 		return errors.New("failed to write public key")
 	}
 
-	err = WriteEncryptedFile(keys.Config.PrivateKeyPath, privateKey, keys.getAdditionalData())
+	err = WriteEncryptedFile(keys.Config.PrivateKeyPath, privateKey, keys.GetAdditionalData())
 	if err != nil {
 		return errors.New("failed to write private key")
 	}
@@ -69,10 +70,10 @@ func (keys KeyManager) createNewKeys(generateKey KeyGenerator) error {
 	return nil
 }
 
-func (keys KeyManager) loadKeys() ([]byte, error) {
+func (keys KeyManager) load() ([]byte, error) {
 	var dateData []byte
 	var creationDate time.Time
-	dateData, err := ReadEncryptedFile(keys.Config.SealedDatePath, keys.getAdditionalData())
+	dateData, err := ReadEncryptedFile(keys.Config.SealedDatePath, keys.GetAdditionalData())
 	if err != nil {
 		return nil, errors.New("failed to read creation info")
 	}
@@ -86,7 +87,7 @@ func (keys KeyManager) loadKeys() ([]byte, error) {
 		return nil, errors.New("unexpected keys creation date")
 	}
 
-	privateKeyData, err := ReadEncryptedFile(keys.Config.PrivateKeyPath, keys.getAdditionalData())
+	privateKeyData, err := ReadEncryptedFile(keys.Config.PrivateKeyPath, keys.GetAdditionalData())
 	if err != nil {
 		return nil, errors.New("failed to read private key")
 	}
@@ -94,8 +95,8 @@ func (keys KeyManager) loadKeys() ([]byte, error) {
 	return privateKeyData, nil
 }
 
-// getAdditionalData returns the additional data used for sealing and unsealing keys.
-func (keys KeyManager) getAdditionalData() []byte {
+// GetAdditionalData returns the additional data used for sealing and unsealing keys.
+func (keys KeyManager) GetAdditionalData() []byte {
 	return []byte(keys.Config.Version)
 }
 

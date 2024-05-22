@@ -28,6 +28,10 @@ func (boxkey BoxKey) GetPublicKey() []byte {
 	return boxkey.publicKey[:]
 }
 
+func (boxkey BoxKey) GetPrivateKey() []byte {
+	return boxkey.privateKey[:]
+}
+
 // Encrypt encrypts the given message using the recipient's public key.
 func (boxkey BoxKey) Encrypt(msg []byte, recipientPublicKey []byte) ([]byte, error) {
 	if len(recipientPublicKey) != PublicKeySize {

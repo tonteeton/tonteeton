@@ -97,19 +97,21 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("Create and load keys", func(t *testing.T) {
 		setupTest(t, config)
-		_, err := keys.loadKeys()
+		_, err := keys.load()
 		if err == nil || string(err.Error()) != "failed to read creation info" {
 			t.Fatalf("Error on reading creation info expeted, got: %v", err)
 		}
 
-		err = keys.createNewKeys(generateRandomKey)
+		err = keys.Save([]byte("testpub"), []byte("testpriv"))
 		if err != nil {
 			t.Fatalf("Error: %v", err)
 		}
-
-		_, err = keys.loadKeys()
+		key, err := keys.load()
 		if err != nil {
 			t.Fatalf("Error: %v", err)
+		}
+		if !bytes.Equal(key, []byte("testpriv")) {
+			t.Fatalf("Unexpected key loaded: %#v", key)
 		}
 	})
 

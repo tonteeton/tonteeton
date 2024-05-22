@@ -1,6 +1,7 @@
 package esign
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"enclave/econf"
 	"os"
@@ -85,5 +86,40 @@ func TestSignatureKey(t *testing.T) {
 		if len(publicKey) != ed25519.PublicKeySize {
 			t.Fatalf("Key of unexpected length")
 		}
+	})
+
+	t.Run("Key saved", func(t *testing.T) {
+		defer setupTest(t, config)()
+
+		var priv [32]byte
+		for i := range priv {
+			priv[i] = 0xaa
+		}
+
+		var pub [32]byte
+		for i := range pub {
+			pub[i] = 0xbb
+		}
+
+		err := SaveSignatureKey(config, append(priv[:], pub[:]...))
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+
+		key, err := GetSignatureKey(config)
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+
+		_ = key
+
+		if !bytes.Equal(key.GetPublicKey(), pub[:]) {
+			t.Fatalf("Wrong public key loaded: %#v", key.GetPublicKey())
+		}
+
+		if !bytes.Equal(key.GetPrivateKey(), append(priv[:], pub[:]...)) {
+			t.Fatalf("Wrong private key loaded: %#v", key.GetPrivateKey())
+		}
+
 	})
 }

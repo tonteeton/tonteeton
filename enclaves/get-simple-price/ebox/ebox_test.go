@@ -28,21 +28,23 @@ func TestBoxKey(t *testing.T) {
 		Version:        "test",
 	}
 
+	var expectedPub [32]byte
+	for i := range expectedPub {
+		expectedPub[i] = 0xaa
+	}
+
+	var expectedPriv [32]byte
+	for i := range expectedPriv {
+		expectedPriv[i] = 0xbb
+	}
+
 	t.Run("Keys loaded correctly", func(t *testing.T) {
 		defer setupTest(t, config)()
-		var expectedPub [32]byte
-		for i := range expectedPub {
-			expectedPub[i] = 0xaa
-		}
-
-		var expectedPriv [32]byte
-		for i := range expectedPriv {
-			expectedPriv[i] = 0xbb
-		}
 
 		GenerateKey = func(_ io.Reader) (*[32]byte, *[32]byte, error) {
 			return &expectedPub, &expectedPriv, nil
 		}
+
 		key, err := GetBoxKey(config)
 		if err != nil {
 			t.Fatalf("Error: %v", err)
@@ -110,6 +112,9 @@ func TestBoxKey(t *testing.T) {
 
 	t.Run("Public key returned", func(t *testing.T) {
 		defer setupTest(t, config)()
+		GenerateKey = func(_ io.Reader) (*[32]byte, *[32]byte, error) {
+			return &expectedPub, &expectedPriv, nil
+		}
 		key, err := GetBoxKey(config)
 		if err != nil {
 			t.Fatalf("Error: %v", err)
@@ -117,6 +122,27 @@ func TestBoxKey(t *testing.T) {
 		publicKey := key.GetPublicKey()
 		if len(publicKey) != PublicKeySize {
 			t.Fatalf("Key of unexpected length")
+		}
+		if !bytes.Equal(publicKey, expectedPub[:]) {
+			t.Fatalf("Unexpected key data %v %v", publicKey, expectedPub[:])
+		}
+	})
+
+	t.Run("Private key returned", func(t *testing.T) {
+		defer setupTest(t, config)()
+		GenerateKey = func(_ io.Reader) (*[32]byte, *[32]byte, error) {
+			return &expectedPub, &expectedPriv, nil
+		}
+		key, err := GetBoxKey(config)
+		if err != nil {
+			t.Fatalf("Error: %v", err)
+		}
+		privateKey := key.GetPrivateKey()
+		if len(privateKey) != PrivateKeySize {
+			t.Fatalf("Key of unexpected length")
+		}
+		if !bytes.Equal(privateKey, expectedPriv[:]) {
+			t.Fatalf("Unexpected key data")
 		}
 	})
 
