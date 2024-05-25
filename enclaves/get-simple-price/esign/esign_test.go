@@ -57,7 +57,7 @@ func TestSignatureKey(t *testing.T) {
 			t.Fatalf("Error: %v", err)
 		}
 
-		if !key1.privateKey.Equal(key2.privateKey) {
+		if !key1.PrivateKey.Equal(key2.PrivateKey) {
 			t.Fatalf("Key was not reused")
 		}
 
@@ -71,8 +71,8 @@ func TestSignatureKey(t *testing.T) {
 			t.Fatalf("Error: %v", err)
 		}
 
-		if key1.privateKey.Equal(key3.privateKey) {
-			t.Fatalf("Private keys always same, %x %x", key1.privateKey, key3.privateKey)
+		if key1.PrivateKey.Equal(key3.PrivateKey) {
+			t.Fatalf("Private keys always same, %x %x", key1.PrivateKey, key3.PrivateKey)
 		}
 	})
 

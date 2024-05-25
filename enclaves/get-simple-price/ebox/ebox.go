@@ -51,6 +51,14 @@ func (boxkey BoxKey) Encrypt(msg []byte, recipientPublicKey []byte) ([]byte, err
 
 // Decrypt decrypts the given encrypted message using the sender's public key.
 func (boxkey BoxKey) Decrypt(encryptedMsg []byte, senderPublicKey []byte) ([]byte, error) {
+	if len(senderPublicKey) != PublicKeySize {
+		return nil, errors.New("invalid public key size")
+	}
+
+	if len(encryptedMsg) <= NonceSize {
+		return nil, errors.New("invalid message size")
+	}
+
 	var senderKey [32]byte
 	copy(senderKey[:], senderPublicKey)
 
