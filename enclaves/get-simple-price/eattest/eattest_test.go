@@ -8,36 +8,35 @@ import (
 	"testing"
 )
 
-
 func TestAttestationGenerated(t *testing.T) {
 	attest := NewAttestation()
 	testCases := []struct {
 		Name     string
-		RunFunc  func() (error)
+		RunFunc  func() error
 		Expected string // empty string if no error expected
 	}{
 		{
-			Name:    "GetReport data too large",
+			Name:     "GetReport data too large",
 			Expected: "too large",
-			RunFunc: func () error {
+			RunFunc: func() error {
 				var reportData [65]byte
 				_, err := attest.GetReport(reportData[:])
 				return err
 			},
 		},
 		{
-			Name:    "GetReport require SGX platform",
+			Name:     "GetReport require SGX platform",
 			Expected: "OE_UNSUPPORTED",
-			RunFunc: func () error {
+			RunFunc: func() error {
 				var reportData [64]byte
 				_, err := attest.GetReport(reportData[:])
 				return err
 			},
 		},
 		{
-			Name:    "Verify require SGX platform",
+			Name:     "Verify require SGX platform",
 			Expected: "OE_UNSUPPORTED",
-			RunFunc: func () error {
+			RunFunc: func() error {
 				_, err := attest.Verify([]byte("test"))
 				return err
 			},
@@ -62,7 +61,6 @@ func verifyError(t *testing.T, err error, expectedSubstring string) {
 		}
 	}
 }
-
 
 func TestReportsComparisonAttestation(t *testing.T) {
 

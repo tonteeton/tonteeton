@@ -1,0 +1,8 @@
+syntax = "proto3";
+option go_package = "ereport/";
+
+message PrivateKeysReport {
+    bytes attestation_report = 1;
+    bytes public_encryption_key = 2;
+    bytes encrypted_signature_key = 3;
+}

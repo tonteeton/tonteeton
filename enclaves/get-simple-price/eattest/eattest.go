@@ -20,8 +20,8 @@ type Attestation struct {
 // NewAttestation creates a new instance of Attestation with default methods.
 func NewAttestation() Attestation {
 	return Attestation{
-		GetSelfReport: enclave.GetSelfReport,
-		GetRemoteReport: enclave.GetRemoteReport,
+		GetSelfReport:      enclave.GetSelfReport,
+		GetRemoteReport:    enclave.GetRemoteReport,
 		VerifyRemoteReport: enclave.VerifyRemoteReport,
 	}
 }
