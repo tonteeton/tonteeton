@@ -1,0 +1,24 @@
+{
+ "exe": "enclave",
+ "key": "private.pem",
+ "debug": false,
+ "heapSize": 512,
+ "executableHeap": false,
+ "productID": 1,
+ "securityVersion": 1,
+ "mounts": [
+     {
+         "source": "mount",
+         "target": "mount",
+         "type": "hostfs",
+         "readOnly": false
+     }
+ ],
+ "env": null,
+ "files": [
+     {
+         "source": "cacert.pem",
+         "target": "/etc/ssl/certs/ca-certificates.crt"
+     }
+ ]
+}
