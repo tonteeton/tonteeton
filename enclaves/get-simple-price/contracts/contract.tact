@@ -39,14 +39,18 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
 
     owner: Address;
     demoAddress: Address;
-    enclavePublicKey: Int as uint256;
     prices: map<Int, PriceUpdate>;
     stopped: Bool = false;
 
+    enclavePublicKey: Int as uint256;
+    enclaveMeasurment: Int as uint256;
+    enclaveAttestation: String;
 
-    init(publicKey: Int, owner: Address) {
+    init(owner: Address, publicKey: Int, enclaveMeasurment: Int, enclaveAttestation: String) {
         self.owner = owner;
         self.enclavePublicKey = publicKey;
+        self.enclaveMeasurment = enclaveMeasurment;
+        self.enclaveAttestation  = enclaveAttestation;
         self.demoAddress = myAddress();
     }
 
@@ -62,6 +66,14 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
 
     get fun demoAddress() : Address {
         return self.demoAddress;
+    }
+
+    get fun enclaveMeasurment() : Int {
+        return self.enclaveMeasurment;
+    }
+
+    get fun enclaveAttestation() : String {
+        return self.enclaveAttestation;
     }
 
     receive ("debug") {

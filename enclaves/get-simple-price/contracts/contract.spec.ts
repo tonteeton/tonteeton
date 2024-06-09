@@ -42,6 +42,7 @@ describe("contract", () => {
         usd24change: BigInt(1566),
         btc: BigInt(10967),
     };
+    const attestationReport = "test".repeat(257);
 
     beforeEach(async () => {
         enclaveKeyPair = keyPairFromSecretKey(
@@ -64,7 +65,12 @@ describe("contract", () => {
 
         let deployer = await blockchain.treasury("deployer");
         contract = blockchain.openContract(
-            await OracleContract.fromInit(BigInt("0x" + enclaveKeyPair.publicKey.toString("hex")), owner.address)
+            await OracleContract.fromInit(
+                owner.address,
+                BigInt("0x" + enclaveKeyPair.publicKey.toString("hex")),
+                BigInt("0xef6d2adf7f08c3ea88305d7c9c73ad9837c60227db2378de8fc7d5e619637134"),
+                attestationReport,
+            )
         );
         let res = await contract.send(deployer.getSender(), { value: toNano(5) }, { $$type: "Deploy", queryId: 0n });
         expect(res.transactions).toHaveTransaction({
@@ -125,6 +131,16 @@ describe("contract", () => {
 
 
     it("should deploy correctly", async () => {});
+
+    it("should have enclave measurment", async () => {
+        expect(await contract.getEnclaveMeasurment()).toBe(
+            BigInt("108295653040254449567541984650930352199134953056630027524746292829709349908788")
+        );
+    });
+
+    it("should have attestation report", async () => {
+        expect(await contract.getEnclaveAttestation()).toBe(attestationReport);
+    });
 
     it("should handle price update from enclave", async () => {
         await sendUpdate(validPayload);
