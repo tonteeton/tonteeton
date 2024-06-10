@@ -16,7 +16,7 @@ RUN set -eux; \
 RUN ego-go build
 
 # Sign the enclave binary
-RUN --mount=type=secret,id=signingkey,dst=private.pem,required=true ego sign enclave
+RUN --mount=type=secret,id=signingkey,dst=private.pem,required=false ego sign enclave
 
 # Build a single-executable bundle with the current EGo runtime
 RUN ego bundle enclave
