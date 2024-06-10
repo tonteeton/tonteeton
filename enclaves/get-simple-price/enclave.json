@@ -14,7 +14,16 @@
          "readOnly": false
      }
  ],
- "env": null,
+ "env": [
+        {
+            "name": "COINGECKO_API_KEY",
+            "fromHost": true
+        },
+        {
+            "name": "COINGECKO_PRO_API_KEY",
+            "fromHost": true
+        }
+ ],
  "files": [
      {
          "source": "cacert.pem",
