@@ -32,3 +32,8 @@ COPY --from=build /app/enclave-bundle /app/enclave-bundle
 RUN mkdir mount
 
 CMD ["ego", "run", "enclave", "get-price"]
+
+LABEL org.opencontainers.image.title="get-simple-price"
+LABEL org.opencontainers.image.description="TonTeeTon enclave app to get the TON prices from CoinGecko"
+LABEL org.opencontainers.image.url="https://github.com/tonteeton/tonteeton/pkgs/container/get-simple-price"
+LABEL org.opencontainers.image.source="https://github.com/tonteeton/tonteeton/tree/main/enclaves/get-simple-price"

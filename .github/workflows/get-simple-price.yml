@@ -1,0 +1,74 @@
+on:
+  push:
+    tags:
+      - 'get_simple_price_v*'
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          VERSION_TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION_TAG##*_}
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "${VERSION}"
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/tonteeton/get-simple-price
+          tags: |
+             type=semver,pattern={{version}},value=${{ env.VERSION }}
+             latest
+          labels: |
+            org.opencontainers.image.title=get-simple-price
+            org.opencontainers.image.description=TonTeeTon enclave app to get the TON prices from CoinGecko.
+            org.opencontainers.image.url=https://github.com/tonteeton/tonteeton/pkgs/container/get-simple-price
+            org.opencontainers.image.source=https://github.com/tonteeton/tonteeton/tree/main/enclaves/get-simple-price
+
+
+      - name: Build enclave image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: enclaves/get-simple-price
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          outputs: |
+            type=image,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+          secrets: |
+            "signingkey=${{ secrets.SIGNINGKEY }}"
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/tonteeton/get-simple-price
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: false
+
+      - name: Report enclave measurment
+        run: |
+          docker run --rm ghcr.io/tonteeton/get-simple-price:latest ego uniqueid enclave | \
+          tee >(tail -n 1 | awk '{print "### Enclave measurement\n\n", $0}' >> $GITHUB_STEP_SUMMARY)
