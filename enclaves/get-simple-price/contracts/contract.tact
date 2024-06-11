@@ -47,6 +47,10 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
         return self.enclaveAttestation;
     }
 
+    get fun balance() : Int {
+        return myBalance();
+    }
+
     receive ("DeployDemo") {
         self.requireOwner();
         self.deployDemo();
@@ -84,13 +88,12 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
             }.toCell());
         } else {
             // Notify the caller that the up-to-date price is not known to the oracle.
-            // The enclave is also notified via logs to update the oracle with the price.
+            // The enclave app should discover this transaction and update the oracle with the price accordingly.
             self.reply(OraclePriceScheduledResponse{
                 queryID: msg.queryID,
                 ticker: msg.ticker,
-                lastUpdatedAt: price.lastUpdatedAt
+                lastUpdatedAt: price.lastUpdatedAt,
             }.toCell());
-            emit("Price is outdated".asComment());
         }
     }
 
@@ -100,12 +103,10 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
 
         let price: PriceUpdate = msg.payload;
         self.prices.set(price.ticker, price);
-
-        emit("Update".asComment());
     }
 
     receive (text: String) {
-        emit("text received".asComment());
+
     }
 
     fun deployDemo() {

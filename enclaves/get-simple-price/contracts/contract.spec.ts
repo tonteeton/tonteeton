@@ -185,7 +185,7 @@ describe("contract", () => {
     it("should respond to price request with a price response", async () => {
         await sendUpdate(validPayload);
 
-        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        let res = await client.send(sender, { value: toNano("0.02") }, "callOracle");
         expect(res.transactions).toHaveTransaction({
             from: client.address,
             to: contract.address,
@@ -221,7 +221,18 @@ describe("contract", () => {
         console.log(outdatedPrice);
         await sendUpdate(outdatedPrice);
 
-        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        const initialOracleBalance = await contract.getBalance();
+
+        let res = await client.send(sender, { value: toNano("0.02") }, "callOracle");
+
+        console.log('total fees = ', res.transactions[1].totalFees);
+
+        printTransactionFees(res.transactions);
+
+
+        // The oracle balance remains unchanged after processing the request.
+        expect(await contract.getBalance()).toBe(initialOracleBalance);
+
         expect(res.transactions).toHaveTransaction({
             from: client.address,
             to: contract.address,
@@ -234,6 +245,5 @@ describe("contract", () => {
             success: true,
             op: findOp(contract, "OraclePriceScheduledResponse"),
         });
-
     });
 });

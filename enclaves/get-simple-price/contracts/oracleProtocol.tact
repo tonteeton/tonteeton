@@ -43,8 +43,8 @@ trait  UsesPriceOracle with UsesTickers {
                 ticker: self.TICKER_TON,
                 minUpdatedAt: now() - 86400, // Price must be no older than 24 hours.
             }.toCell(),
-            value: ton("0.01"),
-            mode: SendRemainingValue | SendIgnoreErrors,
+            value: 0,
+            mode: SendRemainingValue,
             bounce: false
         });
     }
@@ -52,7 +52,7 @@ trait  UsesPriceOracle with UsesTickers {
     // Handle response from the oracle containing price data.
     // This should be overridden by implementing contracts.
     virtual fun receivedOraclePriceResponse(msg: OraclePriceResponse) {
-        throw(0xd21b4fb2);
+        require(sender() == self.priceOracleAddress, "Unknown oracle");
         let sb: StringBuilder = beginString();
         sb.append("TON price received: ");
         sb.append(msg.usd.toString());

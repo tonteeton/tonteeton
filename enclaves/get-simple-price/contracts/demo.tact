@@ -8,7 +8,19 @@ contract DemoContract with UsesPriceOracle {
         self.priceOracleAddress = priceOracleAddress;
     }
 
+    get fun balance() : Int {
+        return myBalance();
+    }
+
+    receive ("callOracle") {
+        self.requestPriceFromOracle();
+    }
+
+    receive (text: String) {
+    }
+
     override fun receivedOraclePriceResponse(msg: OraclePriceResponse) {
+        require(sender() == self.priceOracleAddress, "Unknown oracle");
         let sb: StringBuilder = beginString();
         sb.append("TON to USD: ");
         sb.append(msg.usd.toString());
@@ -21,12 +33,5 @@ contract DemoContract with UsesPriceOracle {
         emit("Oracle price is outdated".asComment());
     }
 
-    receive ("callOracle") {
-        emit("callOracle".asComment());
-        self.requestPriceFromOracle();
-    }
-
-    receive (text: String) {
-    }
 
 }
