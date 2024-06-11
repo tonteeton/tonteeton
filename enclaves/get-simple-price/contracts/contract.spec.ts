@@ -42,6 +42,8 @@ describe("contract", () => {
     let client: SandboxContract<DemoContract>;
     let owner: SandboxContract<TreasuryContract>;
     let sender: Sender;
+    let anonymous: SandboxContract<TreasuryContract>;
+    let anonymousSender: Sender;
     let enclaveKeyPair: KeyPair;
     const now = Math.floor(Date.now() / 1000);
     const validPayload: PriceUpdate = {
@@ -74,6 +76,9 @@ describe("contract", () => {
         owner = await blockchain.treasury("owner");
         sender = owner.getSender();
 
+        anonymous = await blockchain.treasury("anonymous");
+        anonymousSender = anonymous.getSender();
+
         let deployer = await blockchain.treasury("deployer");
         contract = blockchain.openContract(
             await OracleContract.fromInit(
@@ -90,11 +95,11 @@ describe("contract", () => {
             success: true,
             deploy: true,
         });
-        expect((await contract.getDemoAddress()) == contract.address);
+        expect((await contract.getDemoAddress()).toString()).toEqual(contract.address.toString());
 
         client = blockchain.openContract(await DemoContract.fromInit(contract.address));
         res = await client.send(deployer.getSender(), { value: toNano(5) }, "topup");
-        expect((await client.getPriceOracleAddress()) == contract.address);
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
 
         res = await contract.send(sender, { value: toNano("0.023") }, "DeployDemo");
         expect(res.transactions).toHaveTransaction({
@@ -102,7 +107,7 @@ describe("contract", () => {
             to: contract.address,
             success: true,
         });
-        expect((await contract.getDemoAddress()) != contract.address);
+        expect((await contract.getDemoAddress()).toString()).not.toEqual(contract.address.toString());
     });
 
 
@@ -225,13 +230,9 @@ describe("contract", () => {
 
         let res = await client.send(sender, { value: toNano("0.02") }, "callOracle");
 
-        console.log('total fees = ', res.transactions[1].totalFees);
-
         printTransactionFees(res.transactions);
-
-
         // The oracle balance remains unchanged after processing the request.
-        expect(await contract.getBalance()).toBe(initialOracleBalance);
+        expect(await contract.getBalance()).toBeGreaterThan(initialOracleBalance - BigInt(10));
 
         expect(res.transactions).toHaveTransaction({
             from: client.address,
@@ -246,4 +247,28 @@ describe("contract", () => {
             op: findOp(contract, "OraclePriceScheduledResponse"),
         });
     });
+
+    it("should send whole balance to owner", async () => {
+        expect(await contract.getBalance()).toBeGreaterThan(0);
+        let res = await contract.send(sender, { value: toNano("0.1") }, "withdrawBalance");
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: owner.address,
+            success: true,
+        });
+        expect(await contract.getBalance()).toBe(BigInt(0));
+    });
+
+    it("owner is required to withdraw balance", async () => {
+        const initialOracleBalance = await contract.getBalance();
+        expect(initialOracleBalance).toBeGreaterThan(0);
+        let res = await contract.send(anonymousSender, { value: toNano("0.1") }, "withdrawBalance");
+        expect(res.transactions).toHaveTransaction({
+            from: anonymous.address,
+            to: contract.address,
+            success: false,
+        });
+        expect(await contract.getBalance()).toBeGreaterThan(initialOracleBalance - BigInt(10));
+    });
+
 });

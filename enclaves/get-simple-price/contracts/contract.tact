@@ -51,28 +51,6 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
         return myBalance();
     }
 
-    receive ("DeployDemo") {
-        self.requireOwner();
-        self.deployDemo();
-        emit("Demo contract deployed".asComment());
-    }
-
-    // Call self from Demo conract
-    receive ("debug") {
-        self.requireOwner();
-        if (self.demoAddress == myAddress()) {
-            self.deployDemo();
-            emit("Demo contract deployed".asComment());
-        } else {
-            send(SendParameters{
-                to: self.demoAddress,
-                value: ton("0.01"),
-                mode: SendIgnoreErrors,
-                body: "callOracle".asComment()
-            });
-        }
-    }
-
     receive (msg: OraclePriceRequest) {
         require(self.prices.get(msg.ticker) != null, "Unknown ticker");
         let price: PriceUpdate = self.prices.get(msg.ticker)!!;
@@ -103,6 +81,38 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
 
         let price: PriceUpdate = msg.payload;
         self.prices.set(price.ticker, price);
+    }
+
+    receive ("DeployDemo") {
+        self.requireOwner();
+        self.deployDemo();
+        emit("Demo contract deployed".asComment());
+    }
+
+    // Call self from Demo conract
+    receive ("debug") {
+        self.requireOwner();
+        if (self.demoAddress == myAddress()) {
+            self.deployDemo();
+            emit("Demo contract deployed".asComment());
+        } else {
+            send(SendParameters{
+                to: self.demoAddress,
+                value: ton("0.01"),
+                mode: SendIgnoreErrors,
+                body: "callOracle".asComment()
+            });
+        }
+    }
+
+    receive ("withdrawBalance") {
+        self.requireOwner();
+        send(SendParameters{
+            to: self.owner,
+            bounce: true,
+            value: 0,
+            mode: SendRemainingBalance + SendIgnoreErrors
+        });
     }
 
     receive (text: String) {
