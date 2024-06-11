@@ -69,36 +69,28 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
         }
     }
 
-
     receive (msg: OraclePriceRequest) {
-        emit("OraclePriceRequest".asComment());
-        if (self.prices.get(msg.ticker) == null) {
+        require(self.prices.get(msg.ticker) != null, "Unknown ticker");
+        let price: PriceUpdate = self.prices.get(msg.ticker)!!;
+        if (price.lastUpdatedAt >= msg.minUpdatedAt) {
+            self.reply(OraclePriceResponse{
+                queryID: msg.queryID,
+                lastUpdatedAt: price.lastUpdatedAt,
+                ticker: msg.ticker,
+                usd: price.usd,
+                usd24vol: price.usd24vol,
+                usd24change: price.usd24change,
+                btc: price.btc
+            }.toCell());
+        } else {
+            // Notify the caller that the up-to-date price is not known to the oracle.
+            // The enclave is also notified via logs to update the oracle with the price.
             self.reply(OraclePriceScheduledResponse{
                 queryID: msg.queryID,
                 ticker: msg.ticker,
-                lastUpdatedAt: 0
+                lastUpdatedAt: price.lastUpdatedAt
             }.toCell());
-            emit("Unkwown ticker requested".asComment());
-        } else {
-            let price: PriceUpdate = self.prices.get(msg.ticker)!!;
-            if (price.lastUpdatedAt >= msg.minUpdatedAt) {
-                self.reply(OraclePriceResponse{
-                    queryID: msg.queryID,
-                    lastUpdatedAt: price.lastUpdatedAt,
-                    ticker: msg.ticker,
-                    usd: price.usd,
-                    usd24vol: price.usd24vol,
-                    usd24change: price.usd24change,
-                    btc: price.btc
-                }.toCell());
-            } else {
-                self.reply(OraclePriceScheduledResponse{
-                    queryID: msg.queryID,
-                    ticker: msg.ticker,
-                    lastUpdatedAt: price.lastUpdatedAt
-                }.toCell());
-                emit("Price is outdated".asComment());
-            }
+            emit("Price is outdated".asComment());
         }
     }
 

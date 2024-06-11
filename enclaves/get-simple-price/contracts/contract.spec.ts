@@ -25,6 +25,17 @@ function findOp(contract: SandboxContract<OracleContract>, name: string) {
     return selected.header;
 }
 
+
+function errorCode(contract: SandboxContract<OracleContract>, message: string): number {
+    const entries = Object.entries(contract.abi.errors || {});
+    const foundEntry = entries.find(([errorCode, error]) => error.message === message);
+    if (foundEntry) {
+        return parseInt(foundEntry[0]);
+    }
+    throw new Error(`Error code for message "${message}" not found`);
+}
+
+
 describe("contract", () => {
     let blockchain: Blockchain;
     let contract: SandboxContract<OracleContract>;
@@ -188,6 +199,19 @@ describe("contract", () => {
             op: findOp(contract, "OraclePriceResponse"),
         });
 
+    });
+
+    it("should throw Unknown Ticker", async () => {
+        let unknownPrice : PriceUpdate = structuredClone(validPayload);
+        unknownPrice.ticker = BigInt(12345678);
+        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        expect(res.transactions).toHaveTransaction({
+            from: client.address,
+            to: contract.address,
+            success: false,
+            op: findOp(contract, "OraclePriceRequest"),
+            exitCode: errorCode(contract, `Unknown ticker`),
+        });
     });
 
     it("should notify if available price is outdated", async () => {
