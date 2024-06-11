@@ -1,39 +1,10 @@
 import "@stdlib/stoppable";
 import "@stdlib/ownable";
 import "@stdlib/deploy";
-import "./protocol.tact";
+import "./demo.tact";
 import "./enclaveProtocol.tact";
+import "./oracleProtocol.tact";
 
-contract DemoContract with UsesPriceOracle {
-
-    priceOracleAddress : Address;
-
-    init(priceOracleAddress: Address) {
-        self.priceOracleAddress = priceOracleAddress;
-    }
-
-    override fun receivedOraclePriceResponse(msg: OraclePriceResponse) {
-        let sb: StringBuilder = beginString();
-        sb.append("TON to USD: ");
-        sb.append(msg.usd.toString());
-        sb.append("\nTo BTC: ");
-        sb.append(msg.btc.toString());
-        emit(sb.toString().asComment());
-    }
-
-    override fun receivedOraclePriceScheduledResponse(msg: OraclePriceScheduledResponse) {
-        emit("Oracle price is outdated".asComment());
-    }
-
-    receive ("callOracle") {
-        emit("callOracle".asComment());
-        self.requestPriceFromOracle();
-    }
-
-    receive (text: String) {
-    }
-
-}
 
 contract OracleContract with Deployable, Resumable, UsesTickers {
 
@@ -76,25 +47,28 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
         return self.enclaveAttestation;
     }
 
-    receive ("debug") {
-      if (self.demoAddress == myAddress()) {
-        self.deployDemo();
-        emit("Demo contract deployed".asComment());
-      } else {
-        send(SendParameters{
-            to: self.demoAddress,
-            value: ton("0.01"),
-            mode: SendIgnoreErrors,
-            body: "callOracle".asComment()
-        });
-      }
-
-  }
-
     receive ("DeployDemo") {
+        self.requireOwner();
         self.deployDemo();
         emit("Demo contract deployed".asComment());
     }
+
+    // Call self from Demo conract
+    receive ("debug") {
+        self.requireOwner();
+        if (self.demoAddress == myAddress()) {
+            self.deployDemo();
+            emit("Demo contract deployed".asComment());
+        } else {
+            send(SendParameters{
+                to: self.demoAddress,
+                value: ton("0.01"),
+                mode: SendIgnoreErrors,
+                body: "callOracle".asComment()
+            });
+        }
+    }
+
 
     receive (msg: OraclePriceRequest) {
         emit("OraclePriceRequest".asComment());
