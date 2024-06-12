@@ -45,16 +45,8 @@ describe("contract", () => {
     let anonymous: SandboxContract<TreasuryContract>;
     let anonymousSender: Sender;
     let enclaveKeyPair: KeyPair;
-    const now = Math.floor(Date.now() / 1000);
-    const validPayload: PriceUpdate = {
-        $$type: "PriceUpdate",
-        lastUpdatedAt: BigInt(now),
-        ticker: BigInt(0x72716023),
-        usd: BigInt(345),
-        usd24vol: BigInt(81968225604),
-        usd24change: BigInt(1566),
-        btc: BigInt(10967),
-    };
+    let validPayload: PriceUpdate;
+    const now = Math.floor(Date.now() / 1000);    
     const attestationReport = "test".repeat(257);
 
     beforeEach(async () => {
@@ -64,7 +56,19 @@ describe("contract", () => {
                 "hex"
             )
         );
+
+        validPayload = {
+            $$type: "PriceUpdate",
+            lastUpdatedAt: BigInt(now),
+            ticker: BigInt(0x72716023),
+            usd: BigInt(345),
+            usd24vol: BigInt(81968225604),
+            usd24change: BigInt(1566),
+            btc: BigInt(10967),
+        };
+        
         blockchain = await Blockchain.create();
+        blockchain.now = now;
         blockchain.verbosity = {
             ...blockchain.verbosity,
             blockchainLogs: true,
@@ -125,7 +129,9 @@ describe("contract", () => {
             "\nHash:",
             hash.toString("base64"),
             "\nSignature:",
-            signature.toString("base64")
+            signature.toString("base64"),
+            "\nlastUpdatedAt:",
+            payload.lastUpdatedAt,
         );
 
         let res = await contract.send(
@@ -143,7 +149,6 @@ describe("contract", () => {
             success: expectSuccess,
             op: findOp(contract, "Update"),
         });
-        return res;
     }
 
 
@@ -164,7 +169,7 @@ describe("contract", () => {
     });
 
     it("should reject requests with wrong signature", async () => {
-        let payload = validPayload;
+        let payload = structuredClone(validPayload);
         let hash = beginCell().store(storePriceUpdate(payload)).endCell().hash();
         payload.usd += BigInt(1);
         let signature = sign(hash, enclaveKeyPair.secretKey);
@@ -188,15 +193,16 @@ describe("contract", () => {
     });
 
     it("should reject the outdated price update", async () => {
-        let payload = validPayload
+        let payload = structuredClone(validPayload);
+        payload.lastUpdatedAt -= BigInt(10);
         await sendUpdate(payload);
         await sendUpdate(payload, false);
-        payload.lastUpdatedAt += BigInt(1);
+        payload.lastUpdatedAt += BigInt(10);
         await sendUpdate(payload);
     });
 
     it("should reject prices from the future", async () => {
-        let payload = validPayload
+        let payload = structuredClone(validPayload);
         payload.lastUpdatedAt += BigInt(600);
         await sendUpdate(payload, false);
     });
@@ -235,10 +241,8 @@ describe("contract", () => {
 
     it("should notify if available price is outdated", async () => {
         let outdatedPrice : PriceUpdate = structuredClone(validPayload);
-        outdatedPrice.lastUpdatedAt = BigInt(now - 30 * 24 * 60 * 60);
-        console.log(validPayload);
-        console.log(outdatedPrice);
-        await sendUpdate(outdatedPrice, true);
+        outdatedPrice.lastUpdatedAt -= BigInt(30 * 24 * 60 * 60);
+        await sendUpdate(outdatedPrice);
 
         const initialOracleBalance = await contract.getBalance();
 
