@@ -96,7 +96,15 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         require(checkSignature(payloadHash, msg.signature, self.enclavePublicKey), "Invalid signature");
 
         let price: PriceUpdate = msg.payload;
+
+        require(price.lastUpdatedAt <= now(), "Price update is from the future");
+        if (self.prices.get(price.ticker) != null) {
+            let prevPrice: PriceUpdate = self.prices.get(price.ticker)!!;
+            require(price.lastUpdatedAt > prevPrice.lastUpdatedAt, "Price update is outdated");
+        }
+
         self.prices.set(price.ticker, price);
+
         self.reply(price.lastUpdatedAt.toString().asComment());
     }
 

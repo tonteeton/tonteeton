@@ -143,6 +143,7 @@ describe("contract", () => {
             success: expectSuccess,
             op: findOp(contract, "Update"),
         });
+        return res;
     }
 
 
@@ -186,6 +187,19 @@ describe("contract", () => {
         });
     });
 
+    it("should reject the outdated price update", async () => {
+        let payload = validPayload
+        await sendUpdate(payload);
+        await sendUpdate(payload, false);
+        payload.lastUpdatedAt += BigInt(1);
+        await sendUpdate(payload);
+    });
+
+    it("should reject prices from the future", async () => {
+        let payload = validPayload
+        payload.lastUpdatedAt += BigInt(600);
+        await sendUpdate(payload, false);
+    });
 
     it("should respond to price request with a price response", async () => {
         await sendUpdate(validPayload);
