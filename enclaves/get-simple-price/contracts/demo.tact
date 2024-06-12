@@ -14,6 +14,23 @@ contract DemoContract with UsesPriceOracle {
 
     receive ("CallOracle") {
         self.requestPriceFromOracle();
+        self.reply("Called".asComment());
+    }
+
+    receive ("UpdateOracleAddress") {
+        send(SendParameters{
+            to: self.priceOracleAddress,
+            body: "NewAddress".asComment(),
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: false,
+        });
+        self.reply("Update".asComment());
+    }
+
+    receive ("ReportOracle") {
+        require(sender() == self.priceOracleAddress, "Unknown caller");
+        self.reply("DemoReady".asComment());
     }
 
     receive (text: String) {

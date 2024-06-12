@@ -101,7 +101,7 @@ describe("contract", () => {
         res = await client.send(deployer.getSender(), { value: toNano(5) }, "topup");
         expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
 
-        res = await contract.send(sender, { value: toNano("0.023") }, "DeployDemo");
+        res = await contract.send(sender, { value: toNano("0.1") }, "DeployDemo");
         expect(res.transactions).toHaveTransaction({
             from: owner.address,
             to: contract.address,

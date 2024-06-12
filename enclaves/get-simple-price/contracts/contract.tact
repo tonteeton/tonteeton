@@ -97,28 +97,16 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
 
         let price: PriceUpdate = msg.payload;
         self.prices.set(price.ticker, price);
+        self.reply(price.lastUpdatedAt.toString().asComment());
     }
 
     receive ("DeployDemo") {
         self.requireOwner();
         self.deployDemo();
-        emit("Demo contract deployed".asComment());
-    }
-
-    // Call self from Demo conract
-    receive ("Debug") {
-        self.requireOwner();
-        if (self.demoAddress == myAddress()) {
-            self.deployDemo();
-            emit("Demo contract deployed".asComment());
-        } else {
-            send(SendParameters{
-                to: self.demoAddress,
-                value: ton("0.01"),
-                mode: SendIgnoreErrors,
-                body: "CallOracle".asComment()
-            });
-        }
+        let sb: StringBuilder = beginString();
+        sb.append("Demo: ");
+        sb.append(self.demoAddress.toString());
+        emit(sb.toString().asComment());
     }
 
     receive ("withdrawBalance") {
@@ -131,21 +119,25 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         });
     }
 
+    receive ("DemoReady") {
+        require(sender() == self.demoAddress, "Unknown Demo");
+        emit("Demo is ready".asComment());
+    }
+
     receive (text: String) {
 
     }
 
     fun deployDemo() {
-        require(self.demoAddress == myAddress(), "Demo contract is already deployed");
         let init: StateInit = initOf DemoContract(myAddress());
         self.demoAddress = contractAddress(init);
         send(SendParameters{
             to: self.demoAddress,
             value: ton("0.2"),
             mode: SendIgnoreErrors,
+            body: "ReportOracle".asComment(),
             code: init.code,
             data: init.data,
-            body: "CallOracle".asComment()
         });
     }
 
