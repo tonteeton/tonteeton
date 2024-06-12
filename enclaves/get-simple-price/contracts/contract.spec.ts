@@ -14,7 +14,7 @@ import {
     storeTransaction,
     toNano,
 } from "@ton/core";
-import { OracleContract, OraclePriceRequest, PriceUpdate, storePriceUpdate } from "./output/oracle_OracleContract";
+import { MoveTo, OracleContract, OraclePriceRequest, PriceUpdate, storePriceUpdate } from "./output/oracle_OracleContract";
 import { DemoContract } from "./output/oracle_DemoContract";
 
 function findOp(contract: SandboxContract<OracleContract>, name: string) {
@@ -111,7 +111,7 @@ describe("contract", () => {
     });
 
 
-    async function sendUpdate(payload: PriceUpdate) {
+    async function sendUpdate(payload: PriceUpdate, expectSuccess: boolean = true) {
         let hash = beginCell().store(storePriceUpdate(payload)).endCell().hash();
         let signature = sign(hash, enclaveKeyPair.secretKey);
 
@@ -140,7 +140,7 @@ describe("contract", () => {
         expect(res.transactions).toHaveTransaction({
             from: owner.address,
             to: contract.address,
-            success: true,
+            success: expectSuccess,
             op: findOp(contract, "Update"),
         });
     }
@@ -190,7 +190,7 @@ describe("contract", () => {
     it("should respond to price request with a price response", async () => {
         await sendUpdate(validPayload);
 
-        let res = await client.send(sender, { value: toNano("0.02") }, "callOracle");
+        let res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
         expect(res.transactions).toHaveTransaction({
             from: client.address,
             to: contract.address,
@@ -209,7 +209,7 @@ describe("contract", () => {
     it("should throw Unknown Ticker", async () => {
         let unknownPrice : PriceUpdate = structuredClone(validPayload);
         unknownPrice.ticker = BigInt(12345678);
-        let res = await client.send(sender, { value: toNano("0.0123") }, "callOracle");
+        let res = await client.send(sender, { value: toNano("0.0123") }, "CallOracle");
         expect(res.transactions).toHaveTransaction({
             from: client.address,
             to: contract.address,
@@ -224,11 +224,11 @@ describe("contract", () => {
         outdatedPrice.lastUpdatedAt = BigInt(now - 30 * 24 * 60 * 60);
         console.log(validPayload);
         console.log(outdatedPrice);
-        await sendUpdate(outdatedPrice);
+        await sendUpdate(outdatedPrice, true);
 
         const initialOracleBalance = await contract.getBalance();
 
-        let res = await client.send(sender, { value: toNano("0.02") }, "callOracle");
+        let res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
 
         printTransactionFees(res.transactions);
         // The oracle balance remains unchanged after processing the request.
@@ -270,5 +270,66 @@ describe("contract", () => {
         });
         expect(await contract.getBalance()).toBeGreaterThan(initialOracleBalance - BigInt(10));
     });
+
+    it("oracle moving to the new address started", async () => {
+        expect((await contract.getNewAddress()).toString()).toEqual(contract.address.toString());
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
+
+        let res = await contract.send(sender, { value: toNano("0.1") }, {
+            $$type: "MoveTo",
+            newAddress: anonymous.address,
+            moveCompleted: false,
+        });
+        expect((await contract.getNewAddress()).toString()).toEqual(anonymous.address.toString());
+
+        await sendUpdate(validPayload);
+        res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: client.address,
+            success: true,
+            op: findOp(contract, "OraclePriceResponse"),
+        });
+
+        res = await contract.send(sender, { value: toNano("0.01") }, "NewAddress");
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: owner.address,
+            success: true,
+            op: findOp(contract, "OracleNewAddressResponse"),
+        });
+
+    });
+
+    it("oracle moved to the new address", async () => {
+        expect((await contract.getNewAddress()).toString()).toEqual(contract.address.toString());
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
+
+        let res = await contract.send(sender, { value: toNano("0.1") }, {
+            $$type: "MoveTo",
+            newAddress: anonymous.address,
+            moveCompleted: true,
+        });
+        expect((await contract.getNewAddress()).toString()).toEqual(anonymous.address.toString())
+
+        await sendUpdate(validPayload, false);
+        res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
+        expect(res.transactions).not.toHaveTransaction({
+            from: contract.address,
+            to: client.address,
+            success: true,
+            op: findOp(contract, "OraclePriceResponse"),
+        });
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: client.address,
+            success: true,
+            op: findOp(contract, "OracleNewAddressResponse"),
+        });
+
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(anonymous.address.toString());
+
+    });
+
 
 });

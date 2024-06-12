@@ -1,6 +1,6 @@
 // Message structure for requesting price from the oracle.
 message (0xc99be573) OraclePriceRequest {
-    queryID: Int as uint64;       // Identifier for the request (arbitrary, chosen by the dApp developer).
+    queryID: Int as uint64;       // Identifier for the request (arbitrary, greater then 0, chosen by the dApp developer).
     ticker: Int as uint64;        // Asset to request.
     minUpdatedAt: Int as uint64;  // Minimum timestamp for the last update of price data.
 }
@@ -16,11 +16,18 @@ message (0x9735a9c2) OraclePriceResponse {
     btc: Int as uint64;           // Price of the asset in BTC (8 decimal places precision, satoshi).
 }
 
-// Define message structure for receiving scheduled response from the oracle.
+// Message structure for receiving scheduled response from the oracle.
 message (0x00f8bc66) OraclePriceScheduledResponse {
     queryID: Int as uint64;       // Identifier matching the corresponding request.
     ticker: Int as uint64;        // Ticker symbol for the asset.
     lastUpdatedAt: Int as uint64; // Timestamp of the last update of price data.
+}
+
+// Message structure for receiving new address response from the oracle.
+// Sended when oracle moves to a new contract address.
+message (0x9899519b) OracleNewAddressResponse {
+    newAddress: Address;          // New address of the oracle.
+    queryID: Int as uint64;       // Identifier of the original request.
 }
 
 // Trait for entities using ticker symbols.
@@ -32,6 +39,30 @@ trait UsesTickers {
 trait  UsesPriceOracle with UsesTickers {
     // Address of the price oracle should be definded to use this trait.
     priceOracleAddress: Address;
+
+    receive (msg: OraclePriceResponse) {
+        self.requireOracle();
+        self.receivedOraclePriceResponse(msg);
+    }
+
+    receive(msg: OraclePriceScheduledResponse) {
+        self.requireOracle();
+        self.receivedOraclePriceScheduledResponse(msg);
+    }
+
+    receive(msg: OracleNewAddressResponse) {
+        self.requireOracle();
+        self.receivedOracleNewAddressResponse(msg);
+    }
+
+    get fun priceOracleAddress() : Address {
+        return self.priceOracleAddress;
+    }
+
+    // Ensure the sender is the expected oracle contract.
+    fun requireOracle() {
+        require(sender() == self.priceOracleAddress, "Unknown oracle");
+    }
 
     // Function to request price data from the oracle.
     // This should be overridden by implementing contracts.
@@ -52,7 +83,6 @@ trait  UsesPriceOracle with UsesTickers {
     // Handle response from the oracle containing price data.
     // This should be overridden by implementing contracts.
     virtual fun receivedOraclePriceResponse(msg: OraclePriceResponse) {
-        require(sender() == self.priceOracleAddress, "Unknown oracle");
         let sb: StringBuilder = beginString();
         sb.append("TON price received: ");
         sb.append(msg.usd.toString());
@@ -65,16 +95,14 @@ trait  UsesPriceOracle with UsesTickers {
         emit("TON price is outdated".asComment());
     }
 
-    receive (msg: OraclePriceResponse) {
-        self.receivedOraclePriceResponse(msg);
-    }
-
-    receive(msg: OraclePriceScheduledResponse) {
-        self.receivedOraclePriceScheduledResponse(msg);
-    }
-
-    get fun priceOracleAddress() : Address {
-        return self.priceOracleAddress;
+    // Handle response from the oracle indicating a new address.
+    // This should be overridden by implementing contracts.
+    // The contract should decide whether it is safe to trust the new address.
+    virtual fun receivedOracleNewAddressResponse(msg: OracleNewAddressResponse) {
+        let sb: StringBuilder = beginString();
+        sb.append("Oracle contract moved to: ");
+        sb.append(msg.newAddress.toString());
+        emit(sb.toString().asComment());
     }
 
 }

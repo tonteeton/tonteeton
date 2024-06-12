@@ -4,14 +4,18 @@ import "@stdlib/deploy";
 import "./demo.tact";
 import "./enclaveProtocol.tact";
 import "./oracleProtocol.tact";
+import "./movable.tact";
 
-
-contract OracleContract with Deployable, Resumable, UsesTickers {
+contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
 
     owner: Address;
     demoAddress: Address;
+    newAddress: Address;
+
+    stopped: Bool;
+    moved: Bool;
+
     prices: map<Int, PriceUpdate>;
-    stopped: Bool = false;
 
     enclavePublicKey: Int as uint256;
     enclaveMeasurment: Int as uint256;
@@ -23,6 +27,9 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
         self.enclaveMeasurment = enclaveMeasurment;
         self.enclaveAttestation  = enclaveAttestation;
         self.demoAddress = myAddress();
+        self.newAddress = myAddress();
+        self.stopped = false;
+        self.moved = false;
     }
 
     get fun prices() : map<Int, PriceUpdate> {
@@ -52,7 +59,13 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
     }
 
     receive (msg: OraclePriceRequest) {
+        self.requireNotStopped();
+        if (self.moved) {
+            self.replyNewAddress(msg.queryID);
+            return;
+        }
         require(self.prices.get(msg.ticker) != null, "Unknown ticker");
+
         let price: PriceUpdate = self.prices.get(msg.ticker)!!;
         if (price.lastUpdatedAt >= msg.minUpdatedAt) {
             self.reply(OraclePriceResponse{
@@ -76,6 +89,9 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
     }
 
     receive(msg: Update) {
+        self.requireNotStopped();
+        self.requireNotMoved();
+
         let payloadHash: Int = msg.payload.toCell().hash();
         require(checkSignature(payloadHash, msg.signature, self.enclavePublicKey), "Invalid signature");
 
@@ -90,7 +106,7 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
     }
 
     // Call self from Demo conract
-    receive ("debug") {
+    receive ("Debug") {
         self.requireOwner();
         if (self.demoAddress == myAddress()) {
             self.deployDemo();
@@ -100,7 +116,7 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
                 to: self.demoAddress,
                 value: ton("0.01"),
                 mode: SendIgnoreErrors,
-                body: "callOracle".asComment()
+                body: "CallOracle".asComment()
             });
         }
     }
@@ -129,7 +145,7 @@ contract OracleContract with Deployable, Resumable, UsesTickers {
             mode: SendIgnoreErrors,
             code: init.code,
             data: init.data,
-            body: "callOracle".asComment()
+            body: "CallOracle".asComment()
         });
     }
 
