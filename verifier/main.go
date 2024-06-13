@@ -21,6 +21,19 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
+func getContractMethod(api ton.APIClientWrapped, contractAddress *address.Address, methodName string) (*ton.ExecutionResult, error) {
+	b, err := api.CurrentMasterchainInfo(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return api.WaitForBlock(b.SeqNo).RunGetMethod(
+		context.Background(),
+		b,
+		contractAddress,
+		methodName,
+	)
+}
+
 func decodeReport(encodedData string) ([]byte, error) {
 	decodedBase64, err := base64.StdEncoding.DecodeString(encodedData)
 	if err != nil {
@@ -41,7 +54,7 @@ func decodeReport(encodedData string) ([]byte, error) {
 	return decodedData, nil
 }
 
-func verifyReport(reportBytes []byte, expectedMeasurement string) error {
+func verifyReport(reportBytes []byte, expectedMeasurement string, expectedPublicKey []byte) error {
 	report, err := eclient.VerifyRemoteReport(reportBytes)
 	if err != nil {
 		return fmt.Errorf("error verifying remote report: %w", err)
@@ -55,6 +68,15 @@ func verifyReport(reportBytes []byte, expectedMeasurement string) error {
 	if measurement != expectedMeasurement {
 		return fmt.Errorf("unexpected enclave measurement: %s", measurement)
 	}
+
+	enclavePublicKey := report.Data[:32]
+	if !bytes.Equal(enclavePublicKey, expectedPublicKey) {
+		return fmt.Errorf(
+			"unexpected enclave public key: %s",
+			base64.StdEncoding.EncodeToString(enclavePublicKey),
+		)
+	}
+
 	return nil
 }
 
@@ -95,21 +117,19 @@ func main() {
 
 	api := ton.NewAPIClient(client).WithRetry()
 
-	b, err := api.CurrentMasterchainInfo(context.Background())
+	attestationData, err := getContractMethod(api, parsedAddress, "enclaveAttestation")
 	if err != nil {
-		log.Fatalf("error getting block: %v", err)
-	}
-	res, err := api.WaitForBlock(b.SeqNo).RunGetMethod(
-		context.Background(),
-		b,
-		parsedAddress,
-		"enclaveAttestation",
-	)
-	if err != nil {
-		log.Fatalf("error running get method: %v", err)
+		log.Fatalf("Error running contract Get method enclaveAttestation: %v", err)
 	}
 
-	root := res.AsTuple()[0].(*cell.Slice)
+	publicKeyData, err := getContractMethod(api, parsedAddress, "enclavePublicKey")
+	if err != nil {
+		log.Fatalf("Error running contract Get method enclavePublicKey: %v", err)
+	}
+
+	expectedPublicKey := publicKeyData.MustInt(0).Bytes()
+
+	root := attestationData.AsTuple()[0].(*cell.Slice)
 	payload, err := root.LoadStringSnake()
 	if err != nil {
 		log.Fatalf("error loading string: %v", err)
@@ -129,7 +149,7 @@ func main() {
 		log.Fatalf("error writing report file: %v", err)
 	}
 
-	if err = verifyReport(reportBytes, expectedMeasurement); err != nil {
+	if err = verifyReport(reportBytes, expectedMeasurement, expectedPublicKey); err != nil {
 		log.Fatalf("error verifying report: %v", err)
 	}
 
