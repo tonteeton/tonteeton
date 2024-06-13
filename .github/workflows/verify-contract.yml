@@ -1,5 +1,5 @@
 name: TonTeeTon Contract Verification
-
+run-name: Verify get-simple-price - ${{ github.event.inputs.CONTRACT_ADDRESS }}
 on:
   workflow_dispatch:
     inputs:
@@ -26,7 +26,7 @@ jobs:
 
           {
             echo "### Verifying Contract"
-            echo "- **Contract Address:** $ADDRESS"
+            echo "- **Contract Address:** [$ADDRESS](https://tonscan.org/address/$ADDRESS)"
             echo "- **Expected Measurement:** $MEASUREMENT"
             echo ""
 
