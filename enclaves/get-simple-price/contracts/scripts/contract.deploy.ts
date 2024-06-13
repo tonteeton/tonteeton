@@ -4,7 +4,7 @@ import { Address, contractAddress, toNano } from "@ton/core";
 import { TonClient, WalletContractV3R2 } from "@ton/ton";
 import { OracleContract } from "../output/oracle_OracleContract";
 import { prepareTactDeployment } from "@tact-lang/deployer";
-import { delay, getContractInitParams, initContract, newTonClient, newSender, openOracleContract } from "./utils";
+import { delay, getContractInitParams, initContract, isTestnet, newTonClient, newSender, openOracleContract } from "./utils";
 
 async function deployContract(contract: any, address: any) {
     const client = newTonClient();
@@ -33,13 +33,12 @@ async function deployContract(contract: any, address: any) {
 }
 
 (async () => {
-    let testnet = true;
     let packageName = "oracle_OracleContract.pkg";
     console.log(`Contract init arguments: ${await getContractInitParams()}`,);
     let init = await initContract();
 
     let address = contractAddress(0, init);
-    let addressString = address.toString({ testOnly: testnet });
+    let addressString = address.toString({ testOnly: isTestnet() });
     let data = init.data.toBoc();
     let pkg = fs.readFileSync(path.resolve(__dirname, "..", "output", packageName));
 

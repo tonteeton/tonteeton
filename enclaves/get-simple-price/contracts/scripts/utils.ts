@@ -51,8 +51,13 @@ export async function getDemoContractAddress() {
 export function newTonClient() {
     const TON_TONCENTER_KEY = process.env.TON_TONCENTER_KEY;
     return new TonClient({
-        endpoint: `https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TON_TONCENTER_KEY}`,
+        endpoint: isTestnet() ? `https://testnet.toncenter.com/api/v2/jsonRPC` : `https://toncenter.com/api/v2/jsonRPC`,
+        apiKey: TON_TONCENTER_KEY,
     })
+}
+
+export function isTestnet(): boolean {
+    return parseBoolEnv("TON_TESTNET");
 }
 
 export async function newSender(client: TonClient) {
@@ -96,4 +101,17 @@ export function delay(ms: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
+}
+
+export function parseBoolEnv(envVar: string): boolean {
+    if (!process.env[envVar]) {
+            throw new Error(`${envVar} environment variable is not set.`);
+    }
+    const value = process.env[envVar]!;
+    const stringToBool = new Map([["1", true], ["0", false]]);
+    const parsed = stringToBool.get(value);
+    if (parsed === undefined) {
+        throw new Error(`Invalid value for ${envVar}. Must be '1' or '0'.`);
+    }
+    return parsed;
 }
