@@ -24,5 +24,6 @@ coverage.out
 .ropeproject
 
 .env
+*.env
 
 cache/
