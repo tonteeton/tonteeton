@@ -34,4 +34,10 @@ jobs:
               ghcr.io/tonteeton/verifier:latest \
               "$ADDRESS" \
               "$MEASUREMENT" 2>&1
-          } | tee -a "$GITHUB_STEP_SUMMARY"          
+            VERIFICATION_STATUS=$?
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          if [ $VERIFICATION_STATUS -ne 0 ]; then
+            echo "❌ Contract attestation report was not verified" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
