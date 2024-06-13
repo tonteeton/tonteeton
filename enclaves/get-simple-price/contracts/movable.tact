@@ -16,6 +16,10 @@ trait  Movable with Ownable {
         self.requireOwner();
         self.newAddress = msg.newAddress;
         self.moved = msg.moveCompleted;
+        let sb: StringBuilder = beginString();
+        sb.append("Moved to: ");
+        sb.append(self.newAddress.toString());
+        emit(sb.toString().asComment());
     }
 
     receive ("NewAddress") {

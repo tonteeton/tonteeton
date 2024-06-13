@@ -46,6 +46,10 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         return self.demoAddress;
     }
 
+    get fun enclavePublicKey() : Int {
+        return self.enclavePublicKey;
+    }
+
     get fun enclaveMeasurment() : Int {
         return self.enclaveMeasurment;
     }
