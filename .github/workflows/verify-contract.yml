@@ -24,14 +24,14 @@ jobs:
           ADDRESS="${{ github.event.inputs.CONTRACT_ADDRESS }}"
           MEASUREMENT="${{ github.event.inputs.EXPECTED_MEASUREMENT }}"
 
-          echo "### Verifying Contract"
-          echo "- **Contract Address:** $ADDRESS"
-          echo "- **Expected Measurement:** $MEASUREMENT"
-          echo ""
+          {
+            echo "### Verifying Contract"
+            echo "- **Contract Address:** $ADDRESS"
+            echo "- **Expected Measurement:** $MEASUREMENT"
+            echo ""
 
-          { \
-            docker run --rm \
-            ghcr.io/tonteeton/verifier:latest \
-            "$ADDRESS" \
-            "$MEASUREMENT" 2>&1; \
-          } | tee -a "$GITHUB_STEP_SUMMARY"
+            docker run --rm --quiet \
+              ghcr.io/tonteeton/verifier:latest \
+              "$ADDRESS" \
+              "$MEASUREMENT" 2>&1
+          } | tee -a "$GITHUB_STEP_SUMMARY"          
