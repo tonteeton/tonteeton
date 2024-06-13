@@ -1,0 +1,37 @@
+name: TonTeeTon Contract Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONTRACT_ADDRESS:
+        description: 'TON contract address to verify'
+        required: true
+        default: ''
+      EXPECTED_MEASUREMENT:
+        description: 'Expected Enclave measurement (MRENCLAVE)'
+        required: true
+        default: ''
+
+jobs:
+  verify-contract:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Contract
+        run: |
+          ADDRESS="${{ github.event.inputs.CONTRACT_ADDRESS }}"
+          MEASUREMENT="${{ github.event.inputs.EXPECTED_MEASUREMENT }}"
+
+          echo "### Verifying Contract"
+          echo "- **Contract Address:** $ADDRESS"
+          echo "- **Expected Measurement:** $MEASUREMENT"
+          echo ""
+
+          { \
+            docker run --rm \
+            ghcr.io/tonteeton/verifier:latest \
+            "$ADDRESS" \
+            "$MEASUREMENT" 2>&1; \
+          } | tee -a "$GITHUB_STEP_SUMMARY"
