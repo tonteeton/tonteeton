@@ -65,7 +65,7 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
     receive (msg: OraclePriceRequest) {
         self.requireNotStopped();
         if (self.moved) {
-            self.replyNewAddress(msg.queryID);
+            self.replyNewAddress(msg.queryId);
             return;
         }
         require(self.prices.get(msg.ticker) != null, "Unknown ticker");
@@ -73,7 +73,8 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         let price: PriceUpdate = self.prices.get(msg.ticker)!!;
         if (price.lastUpdatedAt >= msg.minUpdatedAt) {
             self.reply(OraclePriceResponse{
-                queryID: msg.queryID,
+                queryId: msg.queryId,
+                payload: msg.customPayload,
                 lastUpdatedAt: price.lastUpdatedAt,
                 ticker: msg.ticker,
                 usd: price.usd,
@@ -85,7 +86,8 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
             // Notify the caller that the up-to-date price is not known to the oracle.
             // The enclave app should discover this transaction and update the oracle with the price accordingly.
             self.reply(OraclePriceScheduledResponse{
-                queryID: msg.queryID,
+                queryId: msg.queryId,
+                payload: msg.customPayload,
                 ticker: msg.ticker,
                 lastUpdatedAt: price.lastUpdatedAt,
             }.toCell());

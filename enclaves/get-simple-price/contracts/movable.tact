@@ -30,10 +30,10 @@ trait  Movable with Ownable {
         return self.newAddress;
     }
 
-    fun replyNewAddress(queryID: Int) {
+    fun replyNewAddress(queryId: Int) {
         self.reply(OracleNewAddressResponse{
             newAddress: self.newAddress,
-            queryID: queryID,
+            queryId: queryId,
         }.toCell());
     }
 

@@ -52,7 +52,7 @@ contract DemoContract with UsesPriceOracle {
     override fun receivedOracleNewAddressResponse(msg: OracleNewAddressResponse) {
         emit("Oracle updated.".asComment());
         self.priceOracleAddress = msg.newAddress;
-        if (msg.queryID > 0) {
+        if (msg.queryId > 0) {
             // Resend request to new oracle address
             self.requestPriceFromOracle();
         }

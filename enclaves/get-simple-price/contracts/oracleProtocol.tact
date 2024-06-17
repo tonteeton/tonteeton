@@ -1,13 +1,15 @@
 // Message structure for requesting price from the oracle.
 message (0xc99be573) OraclePriceRequest {
-    queryID: Int as uint64;       // Identifier for the request (arbitrary, greater then 0, chosen by the dApp developer).
+    queryId: Int as uint64;       // Identifier for the request (arbitrary, greater then 0, chosen by the dApp developer).
+    customPayload: Cell?;         // Optional payload to forward with the request, returned in the response.
     ticker: Int as uint64;        // Asset to request.
     minUpdatedAt: Int as uint64;  // Minimum timestamp for the last update of price data.
 }
 
 // Message structure for receiving price response from the oracle.
 message (0x9735a9c2) OraclePriceResponse {
-    queryID: Int as uint64;       // Identifier, as received from the price request.
+    queryId: Int as uint64;       // Identifier, as received from the price request.
+    payload: Cell?;               // Optional payload from the request.
     lastUpdatedAt: Int as uint64; // Timestamp of the last update of price data.
     ticker: Int as uint64;        // Asset.
     usd: Int as uint64;           // Price of the asset in USD (2 decimal places precision, cents).
@@ -18,7 +20,8 @@ message (0x9735a9c2) OraclePriceResponse {
 
 // Message structure for receiving scheduled response from the oracle.
 message (0x00f8bc66) OraclePriceScheduledResponse {
-    queryID: Int as uint64;       // Identifier matching the corresponding request.
+    queryId: Int as uint64;       // Identifier matching the corresponding request.
+    payload: Cell?;               // Optional payload from the request.
     ticker: Int as uint64;        // Ticker symbol for the asset.
     lastUpdatedAt: Int as uint64; // Timestamp of the last update of price data.
 }
@@ -27,7 +30,7 @@ message (0x00f8bc66) OraclePriceScheduledResponse {
 // Sended when oracle moves to a new contract address.
 message (0x9899519b) OracleNewAddressResponse {
     newAddress: Address;          // New address of the oracle.
-    queryID: Int as uint64;       // Identifier of the original request.
+    queryId: Int as uint64;       // Identifier of the original request.
 }
 
 // Trait for entities using ticker symbols.
@@ -70,7 +73,8 @@ trait  UsesPriceOracle with UsesTickers {
         send(SendParameters{
             to: self.priceOracleAddress,
             body: OraclePriceRequest{
-                queryID: 1,
+                queryId: 1,
+                customPayload: null,
                 ticker: self.TICKER_TON,
                 minUpdatedAt: now() - 86400, // Price must be no older than 24 hours.
             }.toCell(),

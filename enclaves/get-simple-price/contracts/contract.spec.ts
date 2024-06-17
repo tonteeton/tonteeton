@@ -210,7 +210,7 @@ describe("contract", () => {
     it("should respond to price request with a price response", async () => {
         await sendUpdate(validPayload);
 
-        let res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
+        let res = await client.send(sender, { value: toNano("0.03") }, "CallOracle");
         expect(res.transactions).toHaveTransaction({
             from: client.address,
             to: contract.address,
@@ -301,7 +301,7 @@ describe("contract", () => {
         expect((await contract.getNewAddress()).toString()).toEqual(anonymous.address.toString());
 
         await sendUpdate(validPayload);
-        res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
+        res = await client.send(sender, { value: toNano("0.05") }, "CallOracle");
         expect(res.transactions).toHaveTransaction({
             from: contract.address,
             to: client.address,
