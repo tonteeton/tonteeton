@@ -10,7 +10,7 @@ test:
 test-integration:
 	 ego-go test -v ./... -coverprofile=coverage.out --tags=integration
 
-.PHONY: tidy
+.PHONY: format
 format:
 	ego-go fmt ./...
 	ego-go mod tidy -v
@@ -20,14 +20,11 @@ audit:
 	ego-go mod verify
 	ego-go vet ./...
 
-enclave: proto $(SRC) go.mod go.sum cacert.pem cacert.pem.sha256 enclave.json
+enclave: $(SRC) go.mod go.sum cacert.pem cacert.pem.sha256 enclave.json
+	mkdir -p mount
 	sha256sum -c cacert.pem.sha256
 	ego-go build
 
-proto: ereport/private_keys_report.pb.go
-
-ereport/private_keys_report.pb.go: ereport/private_keys_report.proto
-	protoc --go_out=paths=source_relative:./ -I. ereport/private_keys_report.proto
 
 cacert.pem: cacert.pem.sha256
 	# https://curl.se/docs/caextract.html

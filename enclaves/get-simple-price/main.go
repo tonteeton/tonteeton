@@ -3,14 +3,14 @@ package main
 import (
 	"enclave/coinconv"
 	"enclave/coingecko"
-	"enclave/eattest"
-	"enclave/econf"
-	"enclave/ereport"
 	"enclave/eresp"
-	"enclave/esign"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/tonteeton/golib/eattest"
+	"github.com/tonteeton/golib/econf"
+	"github.com/tonteeton/golib/ereport"
+	"github.com/tonteeton/golib/esign"
 	"os"
 )
 
