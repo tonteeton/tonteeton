@@ -166,6 +166,12 @@ describe("contract", () => {
         expect(await contract.getEnclaveAttestation()).toBe(attestationReport);
     });
 
+    it("should have name and version", async () => {
+        const state = await contract.getState();
+        expect(state.name).toEqual("get-simple-price");
+        expect(state.version).toBeGreaterThanOrEqual(16842752);
+    });
+
     it("should handle price update from enclave", async () => {
         await sendUpdate(validPayload);
     });
@@ -270,7 +276,7 @@ describe("contract", () => {
 
     it("should send whole balance to owner", async () => {
         expect(await contract.getBalance()).toBeGreaterThan(0);
-        let res = await contract.send(sender, { value: toNano("0.1") }, "withdrawBalance");
+        let res = await contract.send(sender, { value: toNano("0.1") }, "WithdrawBalance");
         expect(res.transactions).toHaveTransaction({
             from: contract.address,
             to: owner.address,
@@ -282,7 +288,7 @@ describe("contract", () => {
     it("owner is required to withdraw balance", async () => {
         const initialOracleBalance = await contract.getBalance();
         expect(initialOracleBalance).toBeGreaterThan(0);
-        let res = await contract.send(anonymousSender, { value: toNano("0.1") }, "withdrawBalance");
+        let res = await contract.send(anonymousSender, { value: toNano("0.1") }, "WithdrawBalance");
         expect(res.transactions).toHaveTransaction({
             from: anonymous.address,
             to: contract.address,

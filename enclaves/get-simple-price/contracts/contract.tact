@@ -7,6 +7,8 @@ import "./oracleProtocol.tact";
 import "./movable.tact";
 
 contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
+    const contractName: String = "get-simple-price";
+    const contractVersion: Int = 1 << 24 | 1 << 16 | 0;
 
     owner: Address;
     demoAddress: Address;
@@ -62,6 +64,10 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
 
     get fun balance() : Int {
         return myBalance();
+    }
+
+    get fun state() : OracleState {
+        return self.getState();
     }
 
     receive (msg: OraclePriceRequest) {
@@ -125,7 +131,7 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         emit(sb.toString().asComment());
     }
 
-    receive ("withdrawBalance") {
+    receive ("WithdrawBalance") {
         self.requireOwner();
         send(SendParameters{
             to: self.owner,
@@ -138,6 +144,10 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
     receive ("DemoReady") {
         require(sender() == self.demoAddress, "Unknown Demo");
         emit("Demo is ready".asComment());
+    }
+
+    receive ("State"){
+        self.reply(self.getState().toCell());
     }
 
     receive (text: String) {
@@ -155,6 +165,17 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
             code: init.code,
             data: init.data,
         });
+    }
+
+    fun getState() : OracleState {
+        return OracleState{
+            name: self.contractName,
+            version: self.contractVersion,
+            owner: self.owner,
+            prevAddress: self.prevAddress,
+            moved: self.moved,
+            stopped: self.stopped,
+        };
     }
 
 }

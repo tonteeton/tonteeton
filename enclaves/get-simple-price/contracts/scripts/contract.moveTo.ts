@@ -12,7 +12,7 @@ import { delay, openOracleContract, nextSeqno, newSender, newTonClient } from ".
     const moveCompleted = getMoveCompleted();
     console.log(`Move to new address: <${newAddress}>. Move completed: <${moveCompleted}>`);
 
-    await oracle.send(sender, { value: toNano("0.2") }, {
+    await oracle.send(sender, { value: toNano("0.3") }, {
         $$type: "MoveTo",
         newAddress: newAddress,
         moveCompleted: moveCompleted,

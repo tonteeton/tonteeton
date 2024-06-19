@@ -33,6 +33,16 @@ message (0x9899519b) OracleNewAddressResponse {
     queryId: Int as uint64;       // Identifier of the original request.
 }
 
+// Message structure for the Oracle state.
+message (0x79a88945) OracleState {
+    name: String;                // Name of the oracle contract.
+    version: Int as uint32;      // Version of the oracle contract, represented as an integer.
+    owner: Address;              // Address of the oracle contract owner.
+    prevAddress: Address?;       // Previous address of the oracle, if contract was moved to a new address.
+    moved: Bool;                 // Indicates if the oracle has moved to a new address.
+    stopped: Bool;               // Indicates if the oracle is stopped.
+}
+
 // Trait for entities using ticker symbols.
 trait UsesTickers {
     const TICKER_TON : Int = 0x72716023;
