@@ -3,15 +3,15 @@ package coinconv
 
 import (
 	"enclave/coingecko"
-	"enclave/eresp"
+	"enclave/priceresp"
 	"errors"
 	"math"
 	"time"
 )
 
 // ConvertPrice converts price data from Coingecko format to enclave response format.
-func ConvertPrice(from coingecko.SimplePrice, ticker uint64) eresp.EnclavePrice {
-	return eresp.EnclavePrice{
+func ConvertPrice(from coingecko.SimplePrice, ticker uint64) priceresp.Price {
+	return priceresp.Price{
 		LastUpdatedAt: from.LastUpdatedAt,
 		Ticker:        ticker,
 		USD:           uint64(convertFloatValueToInt(from.USD, 2)),
@@ -32,8 +32,8 @@ func convertFloatValueToInt(value float64, precision int) int64 {
 	return int64(roundedValue)
 }
 
-// ValidatePrice validates eresp.EnclavePrice struct fields.
-func ValidatePrice(price eresp.EnclavePrice) error {
+// ValidatePrice validates priceresp.Price struct fields.
+func ValidatePrice(price priceresp.Price) error {
 	currentTime := time.Now()
 	lastUpdatedAt := time.Unix(int64(price.LastUpdatedAt), 0)
 

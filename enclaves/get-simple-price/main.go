@@ -1,20 +1,20 @@
 package main
 
 import (
+	"enclave/appconf"
 	"enclave/coinconv"
 	"enclave/coingecko"
-	"enclave/eresp"
+	"enclave/priceresp"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/tonteeton/golib/eattest"
-	"github.com/tonteeton/golib/econf"
 	"github.com/tonteeton/golib/ereport"
-	"github.com/tonteeton/golib/esign"
+	"github.com/tonteeton/golib/eresp"
 	"os"
 )
 
-func getPrice(cfg *econf.Config) error {
+func getPrice(cfg *appconf.Config) error {
 	gecko := coingecko.NewGecko(
 		cfg.CoinGecko.DemoKey,
 		cfg.CoinGecko.ProKey,
@@ -26,30 +26,21 @@ func getPrice(cfg *econf.Config) error {
 	}
 	fmt.Printf("%+v\n", geckoPrice)
 
-	var price eresp.EnclavePrice
+	var price priceresp.Price
 	price = coinconv.ConvertPrice(geckoPrice.TON, cfg.Tickers.TON)
 	if err := coinconv.ValidatePrice(price); err != nil {
 		return err
 	}
 	fmt.Printf("%+v\n", price)
 
-	signature, err := esign.GetSignatureKey(cfg.SignatureKeys)
-	if err != nil {
-		return err
+	responseCfg := eresp.Config{
+		Response:      cfg.Response,
+		SignatureKeys: cfg.SignatureKeys,
 	}
-
-	result, err := eresp.NewEnclaveResponse(price, signature.GetPrivateKey())
-	if err != nil {
-		return err
-	}
-	err = result.Save()
-	if err != nil {
-		return err
-	}
-	return nil
+	return eresp.SaveResponse(responseCfg, price.ToCell())
 }
 
-func executeReportFunc(fn func(ereport.Config, eattest.Attestation) error, cfg *econf.Config) error {
+func executeReportFunc(fn func(ereport.Config, eattest.Attestation) error, cfg *appconf.Config) error {
 	reportCfg := ereport.Config{
 		Reports:        cfg.Reports,
 		SignatureKeys:  cfg.SignatureKeys,
@@ -60,7 +51,7 @@ func executeReportFunc(fn func(ereport.Config, eattest.Attestation) error, cfg *
 }
 
 func main() {
-	cfg, err := econf.LoadConfig()
+	cfg, err := appconf.LoadConfig()
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		os.Exit(1)
@@ -75,11 +66,11 @@ func main() {
 		fmt.Println("  export-key       Export encrypted signature Private key")
 	}
 
-	cmds := map[string]func(cfg *econf.Config) error{
+	cmds := map[string]func(cfg *appconf.Config) error{
 		"get-price":  getPrice,
-		"report-key": func(cfg *econf.Config) error { return executeReportFunc(ereport.ExportPublicKeys, cfg) },
-		"import-key": func(cfg *econf.Config) error { return executeReportFunc(ereport.ImportPrivateSignature, cfg) },
-		"export-key": func(cfg *econf.Config) error { return executeReportFunc(ereport.ExportPrivateSignature, cfg) },
+		"report-key": func(cfg *appconf.Config) error { return executeReportFunc(ereport.ExportPublicKeys, cfg) },
+		"import-key": func(cfg *appconf.Config) error { return executeReportFunc(ereport.ImportPrivateSignature, cfg) },
+		"export-key": func(cfg *appconf.Config) error { return executeReportFunc(ereport.ExportPrivateSignature, cfg) },
 	}
 
 	if len(os.Args) < 2 {

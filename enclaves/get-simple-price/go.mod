@@ -3,8 +3,8 @@ module enclave
 go 1.21.8
 
 require (
-	github.com/tonteeton/golib v1.0.0
-	github.com/xssnick/tonutils-go v1.9.7
+	github.com/tonteeton/golib v1.1.0
+	github.com/xssnick/tonutils-go v1.9.8
 )
 
 require (

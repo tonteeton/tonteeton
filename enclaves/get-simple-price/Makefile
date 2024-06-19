@@ -6,7 +6,7 @@ all: format test audit enclave
 test:
 	 ego-go test -v ./... -coverprofile=coverage.out
 
-.PHONY: test
+.PHONY: test-integration
 test-integration:
 	 ego-go test -v ./... -coverprofile=coverage.out --tags=integration
 
