@@ -9,13 +9,43 @@ message (0x1af44a9f) MoveTo {
 trait  Movable with Ownable {
 
     owner: Address;
+    prevAddress: Address?;
     newAddress: Address;
     moved: Bool;
 
     receive (msg: MoveTo) {
         self.requireOwner();
+        self.requireNotMoved();
+
         self.newAddress = msg.newAddress;
-        self.moved = msg.moveCompleted;
+        let sb: StringBuilder = beginString();
+        sb.append("Start moving to: ");
+        sb.append(self.newAddress.toString());
+        emit(sb.toString().asComment());
+
+        if (msg.moveCompleted) {
+            send(SendParameters{
+                to: self.newAddress,
+                value: 0,
+                mode: SendRemainingValue,
+                bounce: false,
+                body: "MoveConfirmation".asComment(),
+            });
+        }
+    }
+
+    receive ("MoveConfirmation") {
+        require(sender() == self.prevAddress, "Previous address required");
+        self.reply("MoveCompleted".asComment());
+    }
+
+    receive ("MoveCompleted") {
+        require(!self.moved, "Already moved");
+        require(self.newAddress != myAddress(), "Address is not new");
+        require(sender() == self.newAddress, "New address sender expected");
+
+        self.moved = true;
+
         let sb: StringBuilder = beginString();
         sb.append("Moved to: ");
         sb.append(self.newAddress.toString());

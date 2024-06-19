@@ -11,6 +11,7 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
     owner: Address;
     demoAddress: Address;
     newAddress: Address;
+    prevAddress: Address?;
 
     stopped: Bool;
     moved: Bool;
@@ -21,13 +22,14 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
     enclaveMeasurment: Int as uint256;
     enclaveAttestation: String;
 
-    init(owner: Address, publicKey: Int, enclaveMeasurment: Int, enclaveAttestation: String) {
+    init(owner: Address, prevAddress: Address?, publicKey: Int, enclaveMeasurment: Int, enclaveAttestation: String) {
         self.owner = owner;
         self.enclavePublicKey = publicKey;
         self.enclaveMeasurment = enclaveMeasurment;
         self.enclaveAttestation  = enclaveAttestation;
         self.demoAddress = myAddress();
         self.newAddress = myAddress();
+        self.prevAddress = prevAddress;
         self.stopped = false;
         self.moved = false;
     }

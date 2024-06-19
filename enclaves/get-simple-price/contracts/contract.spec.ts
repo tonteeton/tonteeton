@@ -41,12 +41,13 @@ describe("contract", () => {
     let contract: SandboxContract<OracleContract>;
     let client: SandboxContract<DemoContract>;
     let owner: SandboxContract<TreasuryContract>;
+    let deployer: SandboxContract<TreasuryContract>;
     let sender: Sender;
     let anonymous: SandboxContract<TreasuryContract>;
     let anonymousSender: Sender;
     let enclaveKeyPair: KeyPair;
     let validPayload: PriceUpdate;
-    const now = Math.floor(Date.now() / 1000);    
+    const now = Math.floor(Date.now() / 1000);
     const attestationReport = "test".repeat(257);
 
     beforeEach(async () => {
@@ -66,7 +67,7 @@ describe("contract", () => {
             usd24change: BigInt(1566),
             btc: BigInt(10967),
         };
-        
+
         blockchain = await Blockchain.create();
         blockchain.now = now;
         blockchain.verbosity = {
@@ -83,10 +84,11 @@ describe("contract", () => {
         anonymous = await blockchain.treasury("anonymous");
         anonymousSender = anonymous.getSender();
 
-        let deployer = await blockchain.treasury("deployer");
+        deployer = await blockchain.treasury("deployer");
         contract = blockchain.openContract(
             await OracleContract.fromInit(
                 owner.address,
+                null,
                 BigInt("0x" + enclaveKeyPair.publicKey.toString("hex")),
                 BigInt("0xef6d2adf7f08c3ea88305d7c9c73ad9837c60227db2378de8fc7d5e619637134"),
                 attestationReport,
@@ -99,6 +101,7 @@ describe("contract", () => {
             success: true,
             deploy: true,
         });
+
         expect((await contract.getDemoAddress()).toString()).toEqual(contract.address.toString());
 
         client = blockchain.openContract(await DemoContract.fromInit(contract.address));
@@ -150,7 +153,6 @@ describe("contract", () => {
             op: findOp(contract, "Update"),
         });
     }
-
 
     it("should deploy correctly", async () => {});
 
@@ -319,18 +321,74 @@ describe("contract", () => {
 
     });
 
-    it("oracle moved to the new address", async () => {
+    it("oracle not move without confirmation", async () => {
         expect((await contract.getNewAddress()).toString()).toEqual(contract.address.toString());
         expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
 
-        let res = await contract.send(sender, { value: toNano("0.1") }, {
+        let res = await contract.send(sender, { value: toNano("0.2") }, {
             $$type: "MoveTo",
             newAddress: anonymous.address,
             moveCompleted: true,
         });
         expect((await contract.getNewAddress()).toString()).toEqual(anonymous.address.toString())
 
-        await sendUpdate(validPayload, false);
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: anonymous.address,
+            body: beginCell().storeUint(0, 32).storeStringTail("MoveConfirmation").endCell(),
+            success: true,
+        });
+
+        await sendUpdate(validPayload, true); // Old contract is still functional
+    });
+
+    it("oracle moved to the new address", async () => {
+        expect((await contract.getNewAddress()).toString()).toEqual(contract.address.toString());
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(contract.address.toString());
+
+        let nextContract: SandboxContract<OracleContract>;
+        nextContract = blockchain.openContract(
+            await OracleContract.fromInit(
+                owner.address,
+                contract.address, // prevAddress
+                BigInt("0x" + enclaveKeyPair.publicKey.toString("hex")),
+                BigInt("0xef6d2adf7f08c3ea88305d7c9c73ad9837c60227db2378de8fc7d5e619637134"),
+                attestationReport,
+            )
+        );
+        let res = await nextContract.send(deployer.getSender(), { value: toNano(5) }, { $$type: "Deploy", queryId: 0n });
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: nextContract.address,
+            success: true,
+            deploy: true,
+        });
+        expect((contract.address)).not.toEqual(nextContract.address);
+
+        res = await contract.send(sender, { value: toNano("0.2") }, {
+            $$type: "MoveTo",
+            newAddress: nextContract.address,
+            moveCompleted: true,
+        });
+
+        expect((await contract.getNewAddress()).toString()).toEqual(nextContract.address.toString());
+
+        expect(res.transactions).toHaveTransaction({
+            from: contract.address,
+            to: nextContract.address,
+            body: beginCell().storeUint(0, 32).storeStringTail("MoveConfirmation").endCell(),
+            success: true,
+        });
+
+        expect(res.transactions).toHaveTransaction({
+            from: nextContract.address,
+            to: contract.address,
+            body: beginCell().storeUint(0, 32).storeStringTail("MoveCompleted").endCell(),
+            success: true,
+        });
+
+        await sendUpdate(validPayload, false); // Old contract is disabled
+
         res = await client.send(sender, { value: toNano("0.02") }, "CallOracle");
         expect(res.transactions).not.toHaveTransaction({
             from: contract.address,
@@ -345,7 +403,7 @@ describe("contract", () => {
             op: findOp(contract, "OracleNewAddressResponse"),
         });
 
-        expect((await client.getPriceOracleAddress()).toString()).toEqual(anonymous.address.toString());
+        expect((await client.getPriceOracleAddress()).toString()).toEqual(nextContract.address.toString());
 
     });
 

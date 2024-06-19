@@ -4,9 +4,10 @@ import { mnemonicNew, mnemonicToPrivateKey } from "@ton/crypto";
 import { OracleContract } from "../output/oracle_OracleContract";
 import { DemoContract } from "../output/oracle_DemoContract";
 
-export async function getContractInitParams(): Promise<[Address, bigint, bigint, string]> {
+export async function getContractInitParams(): Promise<[Address, Address | null, bigint, bigint, string]> {
     const requiredEnvVars = [
         "TON_CONTRACT_OWNER",
+        "TON_PREV_ADDRESS",
         "ENCLAVE_PUBLIC_KEY",
         "ENCLAVE_MEASUREMENT",
         "ENCLAVE_ATTESTATION"
@@ -23,9 +24,12 @@ export async function getContractInitParams(): Promise<[Address, bigint, bigint,
     const ENCLAVE_PUBLIC_KEY = BigInt(
        "0x" + Buffer.from(process.env.ENCLAVE_PUBLIC_KEY!, "base64").toString("hex"),
     );
+    const prevAddress = process.env.TON_PREV_ADDRESS!;
+    const TON_PREV_ADDRESS = (prevAddress == "null") ? null : Address.parse(prevAddress);
 
     return [
         TON_CONTRACT_OWNER,
+        TON_PREV_ADDRESS,
         ENCLAVE_PUBLIC_KEY,
         ENCLAVE_MEASUREMENT,
         ENCLAVE_ATTESTATION,
