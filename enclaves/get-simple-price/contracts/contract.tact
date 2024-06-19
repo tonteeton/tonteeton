@@ -6,7 +6,10 @@ import "./enclaveProtocol.tact";
 import "./oracleProtocol.tact";
 import "./movable.tact";
 
+// OracleContract is a TonTeeTon app contract for providing TON price updates.
+// Contract source code is at https://github.com/tonteeton/tonteeton/tree/main/enclaves/get-simple-price/contracts
 contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
+    // Contract name and version, to include in state report.
     const contractName: String = "get-simple-price";
     const contractVersion: Int = 1 << 24 | 1 << 16 | 0;
 
@@ -36,40 +39,49 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         self.moved = false;
     }
 
+    // Returns the map of prices.
     get fun prices() : map<Int, PriceUpdate> {
         return self.prices;
 
     }
 
+    // Returns the price update for a given ticker.
     get fun price(ticker: Int) : PriceUpdate? {
         return self.prices.get(ticker);
 
     }
 
+    // Returns the address of deployed demo contract.
     get fun demoAddress() : Address {
         return self.demoAddress;
     }
 
+    // Returns the public key (signature) of the enclave.
     get fun enclavePublicKey() : Int {
         return self.enclavePublicKey;
     }
 
+    // Returns the measurement of the enclave.
     get fun enclaveMeasurment() : Int {
         return self.enclaveMeasurment;
     }
 
+    // Returns the attestation report of the enclave.
     get fun enclaveAttestation() : String {
         return self.enclaveAttestation;
     }
 
+    // Returns the balance of the contract.
     get fun balance() : Int {
         return myBalance();
     }
 
+    // Returns the state of the Oracle contract.
     get fun state() : OracleState {
         return self.getState();
     }
 
+    // Handles an OraclePriceRequest message.
     receive (msg: OraclePriceRequest) {
         self.requireNotStopped();
         if (self.moved) {
@@ -102,6 +114,7 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
         }
     }
 
+    // Handles an Update message from enclave to update the prices.
     receive(msg: Update) {
         self.requireNotStopped();
         self.requireNotMoved();
@@ -173,9 +186,9 @@ contract OracleContract with Deployable, Resumable, Movable, UsesTickers {
             version: self.contractVersion,
             owner: self.owner,
             prevAddress: self.prevAddress,
+            newAddress: self.newAddress,
             moved: self.moved,
             stopped: self.stopped,
         };
     }
-
 }

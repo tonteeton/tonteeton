@@ -1,8 +1,10 @@
+// TonTeeTon get-simple-price contract protocol.
+
 // Message structure for requesting price from the oracle.
 message (0xc99be573) OraclePriceRequest {
     queryId: Int as uint64;       // Identifier for the request (arbitrary, greater then 0, chosen by the dApp developer).
     customPayload: Cell?;         // Optional payload to forward with the request, returned in the response.
-    ticker: Int as uint64;        // Asset to request.
+    ticker: Int as uint64;        // Asset to request, value from the UsesTickers trait.
     minUpdatedAt: Int as uint64;  // Minimum timestamp for the last update of price data.
 }
 
@@ -11,7 +13,7 @@ message (0x9735a9c2) OraclePriceResponse {
     queryId: Int as uint64;       // Identifier, as received from the price request.
     payload: Cell?;               // Optional payload from the request.
     lastUpdatedAt: Int as uint64; // Timestamp of the last update of price data.
-    ticker: Int as uint64;        // Asset.
+    ticker: Int as uint64;        // Asset, value from the UsesTickers trait.
     usd: Int as uint64;           // Price of the asset in USD (2 decimal places precision, cents).
     usd24vol: Int as uint64;      // 24-hour volume in USD (cents).
     usd24change: Int as int64;    // 24-hour change in USD (cents).
@@ -39,6 +41,7 @@ message (0x79a88945) OracleState {
     version: Int as uint32;      // Version of the oracle contract, represented as an integer.
     owner: Address;              // Address of the oracle contract owner.
     prevAddress: Address?;       // Previous address of the oracle, if contract was moved to a new address.
+    newAddress: Address;         // Address where the oracle contract currently resides; new address if a move operation is initiated.
     moved: Bool;                 // Indicates if the oracle has moved to a new address.
     stopped: Bool;               // Indicates if the oracle is stopped.
 }
