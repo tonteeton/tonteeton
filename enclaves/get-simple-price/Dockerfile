@@ -29,6 +29,8 @@ WORKDIR /app
 # Copy the built files from the build stage
 COPY --from=build /app/enclave /app/enclave
 COPY --from=build /app/enclave-bundle /app/enclave-bundle
+
+COPY sgx_default_qcnl.conf /etc/sgx_default_qcnl.conf
 RUN mkdir mount
 
 CMD ["ego", "run", "enclave", "get-price"]

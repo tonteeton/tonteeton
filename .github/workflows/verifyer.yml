@@ -1,3 +1,5 @@
+name: Contract SGX attestation Verifyer app
+
 on:
   push:
     tags:

@@ -1,3 +1,4 @@
+// Package coingecko provides a client for interacting with the CoinGecko API to fetch cryptocurrency price data.
 package coingecko
 
 import (

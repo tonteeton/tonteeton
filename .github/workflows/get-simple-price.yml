@@ -1,3 +1,5 @@
+name: get-simple-price enclave
+
 on:
   push:
     tags:
@@ -57,7 +59,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           outputs: |
-            type=image,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+            type=image,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }} Built by action: https://github.com/tonteeton/tonteeton/actions/runs/${{ github.run_id }}
           secrets: |
             "signingkey=${{ secrets.SIGNINGKEY }}"
 
