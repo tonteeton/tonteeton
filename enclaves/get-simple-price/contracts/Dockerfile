@@ -12,7 +12,7 @@ RUN npm install ton-crypto
 COPY . /app/sources
 COPY ./tact.config.json /app/tact.config.json
 
-RUN yarn build && yarn test
+RUN rm -f sources/output/* && yarn build && yarn test
 
 RUN chmod +x /app/sources/scripts/entrypoint.sh
 
