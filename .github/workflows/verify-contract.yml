@@ -1,4 +1,5 @@
-name: TonTeeTon Contract Verification
+name: Contract SGX attestation verification
+
 run-name: Verify get-simple-price - ${{ github.event.inputs.CONTRACT_ADDRESS }}
 on:
   workflow_dispatch:
@@ -26,8 +27,8 @@ jobs:
 
           set -o pipefail
           {
-            echo "### Verifying Contract"
-            echo "- **Contract Address:** [$ADDRESS](https://tonscan.org/address/$ADDRESS)"
+            echo "### Verifying Contract SGX attestation"
+            echo "- **Contract Address:** [$ADDRESS](https://tonviewer.com/$ADDRESS?section=code)"
             echo "- **Expected Measurement:** $MEASUREMENT"
             echo ""
 

@@ -1,3 +1,5 @@
+name: get-simple-price enclave
+
 on:
   push:
     tags:
@@ -57,7 +59,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           outputs: |
-            type=image,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+            type=image,name=target,annotation-index.org.opencontainers.image.description=https://github.com/tonteeton/tonteeton/actions/runs/${{ github.run_id }}
           secrets: |
             "signingkey=${{ secrets.SIGNINGKEY }}"
 
@@ -66,9 +68,16 @@ jobs:
         with:
           subject-name: ghcr.io/tonteeton/get-simple-price
           subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: false
+          push-to-registry: true
 
       - name: Report enclave measurment
         run: |
           docker run --rm ghcr.io/tonteeton/get-simple-price:latest ego uniqueid enclave | \
           tee >(tail -n 1 | awk '{print "### Enclave measurement\n\n", $0}' >> $GITHUB_STEP_SUMMARY)
+
+      - name: Report package location
+        run: |
+          echo "Image pushed to " >> $GITHUB_STEP_SUMMARY)
+          docker run --rm ghcr.io/tonteeton/get-simple-price:latest ego uniqueid enclave | \
+          tee >(tail -n 1 | awk '{print "### Enclave measurement\n\n", $0}' >> $GITHUB_STEP_SUMMARY)
+

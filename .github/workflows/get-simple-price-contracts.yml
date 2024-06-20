@@ -1,3 +1,5 @@
+name: get-simple-price contract
+
 on:
   push:
     tags:
