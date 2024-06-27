@@ -25,6 +25,21 @@ enclave: $(SRC) go.mod go.sum cacert.pem cacert.pem.sha256 enclave.json
 	sha256sum -c cacert.pem.sha256
 	ego-go build
 
+.PHONY: docker-build
+docker-build: private.pem
+	docker buildx build --secret id=signingkey,src=$$PWD/private.pem -t t3-get-simple-price --no-cache .
+
+.PHONY: docker-run
+docker-run:
+	docker run --rm -it \
+	-v $$PWD/mount:/app/mount \
+	--device /dev/sgx_enclave \
+	--device /dev/sgx_provision \
+	t3-get-simple-price \
+	/bin/bash
+
+private.pem:
+	openssl genrsa -out private.pem -3 3072
 
 cacert.pem: cacert.pem.sha256
 	# https://curl.se/docs/caextract.html
