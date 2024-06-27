@@ -1,3 +1,0 @@
-[submodule "examples/tontastic"]
-	path = examples/tontastic
-	url = git@github.com:tonteeton/tontastic.git
