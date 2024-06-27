@@ -13,7 +13,7 @@ providing TON contracts with up-to-date information on market prices.
 
 - [appconf](./appconf): Application configuration management.
 - [coingecko](./coingecko): A client for interacting with the CoinGecko API to fetch cryptocurrency price data.
-- [conconv](./conconv): Conversion from CoinGecko format to enclave response format.
+- [coinconv](./coinconv): Conversion from CoinGecko format to enclave response format.
 - [priceresp](./priceresp): Prepare price enclave TON-compatible response.
 
 ## Local build (build and check the enclave ID)
