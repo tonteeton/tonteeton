@@ -1,13 +1,22 @@
 # TonTeeTon
 
-Empowering TON DeFi with a community-driven, trusted oracle solution.
+Empowering TON with trusted off-chain computations.
+
+- Project documentation: https://docs.tonteeton.com
+- Participation in The Open League Hackathon: https://dorahacks.io/buidl/11677
+- TonTeeTon Contract Verifier: [verifier])(./verifier)
+- First enclave app implemented: [get-simple-price](./enclaves/get-simple-price)
 
 ## Description
+
 The TonTeeTon project seeks to enhance the capabilities of TON DApps by enabling trusted off-chain computations using secure memory enclaves. 
 
 By providing verifiable computation results and protecting sensitive data, TonTeeTon empowers developers to build sophisticated off-chain solutions while leveraging the benefits of the TON blockchain.
 
+TonTeeTon off-chain applications (*enclaves*) are developed using the [EGo SDK](https://www.edgeless.systems/products/ego) by [Edgeless Systems](https://www.edgeless.systems/).
+
 ## TonTastic
 
-During the ETH Belgrade hackathon, as part of our vision, we plan to develop a Telegram Mini-app demonstrating how to create a gamified quiz application utilizing TON and the TonTeeTon solution : https://github.com/tonteeton/tontastic .
+TonTeeTon participated in the [Open League Summer: Belgrade Bootcamp](https://lu.ma/theopenleaguesummerbelgrade) track during the [ETHBelgrade Hackathon](https://ethbelgrade.rs/hackathon), earning 3rd place.
 
+The TONtastic! Telegram bot and Mini-app were implemented, demonstrating a gamified quiz application utilizing the TonTeeTon oracle contract: https://github.com/tonteeton/tontastic

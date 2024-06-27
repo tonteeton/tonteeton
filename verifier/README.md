@@ -21,10 +21,22 @@ Upon successful verification, you should see the message:
 
 ## Development Build
 
-1. **Build the Docker image** using the following command:
+1. **Clone the repository** and navigate to the verifier directory:
+
+    ```sh
+    git clone https://github.com/tonteeton/tonteeton.git
+    cd tonteeton/verifier/
+    ```
+
+2. **Build the Docker image** using the following command:
 
     docker build -t t3-verifier .
 
-2. **Run the command** with the `contractAddress` and the `expectedMeasurement`:
+3. **Run the command** with the `contractAddress` and the `expectedMeasurement`:
 
-    docker run --rm t3-verifier <contractAddress> <expectedMeasurement>
+    `docker run --rm t3-verifier <contractAddress> <expectedMeasurement>`
+
+
+## Reports
+
+Reports for known contracts are available at [GitHub Actions](https://github.com/tonteeton/tonteeton/actions/workflows/verify-contract.yml).
