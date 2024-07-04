@@ -18,6 +18,11 @@ The enclave contract operates as follows:
   - **[`OraclePriceScheduledResponse`](#oraclepricescheduledresponse)**: If the enclave doesn't have up-to-date data but acknowledges the request, it responds with details about the scheduled response. Clients can repeat the request later to obtain updated information.
   - **[`OracleNewAddressResponse`](#oraclenewaddressresponse)**: When the enclave updates and moves to a new contract address, it responds with the updated address details.
 
+```{admonition} Diagram
+:class: dropdown
+![Diagram](diagrams/get_simple_price.svg)
+```
+
 ## URLs
 
 * Source code: https://github.com/tonteeton/tonteeton/tree/main/enclaves/get-simple-price
@@ -71,7 +76,7 @@ This message structure is used for receiving price response from the oracle.
 | `ticker`         | `Int as uint64` | Asset, value from the UsesTickers trait. |
 | `usd`            | `Int as uint64` | Price of the asset in USD (2 decimal places precision, cents). |
 | `usd24vol`       | `Int as uint64` | 24-hour volume in USD (cents). |
-| `usd24change`    | `Int as int64` | 24-hour change in USD (cents). |
+| `usd24change`    | `Int as int64` | 24-hour change relative to USD (2 decimal places precision, percent with sign). |
 | `btc`            | `Int as uint64` | Price of the asset in BTC (8 decimal places precision, satoshi). |
 
 

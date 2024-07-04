@@ -16,7 +16,7 @@ message (0x9735a9c2) OraclePriceResponse {
     ticker: Int as uint64;        // Asset, value from the UsesTickers trait.
     usd: Int as uint64;           // Price of the asset in USD (2 decimal places precision, cents).
     usd24vol: Int as uint64;      // 24-hour volume in USD (cents).
-    usd24change: Int as int64;    // 24-hour change in USD (cents).
+    usd24change: Int as int64;    // 24-hour change relative to USD (2 decimal places precision, percent with sign).
     btc: Int as uint64;           // Price of the asset in BTC (8 decimal places precision, satoshi).
 }
 
