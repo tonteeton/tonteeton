@@ -2,14 +2,18 @@
 
 set -e
 
-echo $1
-if [[ $1 == *.ts ]]; then
-    script="sources/scripts/$1"
-    shift
+if [[ "$1" != *.ts ]]; then
+    script="sources/scripts/${1}.ts"
 else
-    echo "Error: First argument must be a TypeScript file ending with .ts"
-    { cd sources/scripts ; ls *.ts; }
+    script="sources/scripts/${1}"
+fi
+
+if [[ ! -f $script ]]; then
+    echo "Error: Script $script does not exist."
+    echo "Available scripts:"
+    (cd sources/scripts && ls *.ts)
     exit 1
 fi
 
+shift
 yarn --silent ts-node "$script" "$@"
