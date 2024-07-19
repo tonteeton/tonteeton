@@ -34,6 +34,7 @@ The enclave contract operates as follows:
   * Contract published containers: [container/get-simple-price-contracts](https://github.com/tonteeton/tonteeton/pkgs/container/get-simple-price-contracts)
   * Enclave published containers: [container/get-simple-price](https://github.com/tonteeton/tonteeton/pkgs/container/get-simple-price)
 * Current address in TON mainnet: [EQCEcsyKQhGK2ofX4FIVpOTPd9DcC2HqzFUIpYrXo5kOyo61](https://tonviewer.com/EQCEcsyKQhGK2ofX4FIVpOTPd9DcC2HqzFUIpYrXo5kOyo61)
+* Contract dashboard with stats is available as a Telegram mini-app: [@TonTeeTonBot/get_simple_price](https://t.me/TonTeeTonBot/get_simple_price).
 
 ## Contract client protocol messages
 

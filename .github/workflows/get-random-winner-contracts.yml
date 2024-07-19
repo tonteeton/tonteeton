@@ -1,0 +1,63 @@
+name: get-random-winner contract
+
+on:
+  push:
+    tags:
+      - 'get_random_winner_contracts_v*'
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          VERSION_TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION_TAG##*_}
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "${VERSION}"
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/tonteeton/get-random-winner-contracts
+          tags: |
+             type=semver,pattern={{version}},value=${{ env.VERSION }}
+             latest
+          labels: |
+            org.opencontainers.image.title=get-random-winner-contracts
+            org.opencontainers.image.description=TonTeeTon get-random-winner contracts.
+
+      - name: Build contracts image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: enclaves/get-random-winner/contracts
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          outputs: |
+            type=image,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ghcr.io/tonteeton/get-random-winner-contracts
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: false
