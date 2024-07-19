@@ -1,0 +1,41 @@
+{
+ "exe": "enclave",
+ "key": "private.pem",
+ "debug": false,
+ "heapSize": 512,
+ "executableHeap": false,
+ "productID": 1,
+ "securityVersion": 1,
+ "mounts": [
+     {
+         "source": "mount",
+         "target": "mount",
+         "type": "hostfs",
+         "readOnly": false
+     }
+ ],
+ "env": [
+        {
+            "name": "TON_TESTNET",
+            "fromHost": true
+        },
+        {
+            "name": "TON_CONTRACT_ADDRESS",
+            "fromHost": true
+        },
+        {
+            "name": "TON_WALLET_MNEMONIC",
+            "fromHost": true
+        }
+ ],
+ "files": [
+    {
+         "source": "cacert.pem",
+         "target": "/etc/ssl/certs/ca-certificates.crt"
+    },
+    {
+         "source": "buidls.json",
+         "target": "buidls.json"
+    }
+ ]
+}
