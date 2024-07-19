@@ -43,10 +43,11 @@ private.pem:
 
 cacert.pem: cacert.pem.sha256
 	# https://curl.se/docs/caextract.html
-	wget https://curl.se/ca/cacert.pem
+	wget -O $@ https://curl.se/ca/cacert-2024-07-02.pem
 
 cacert.pem.sha256:
-	wget https://curl.se/ca/cacert.pem.sha256
+	wget -O $@ https://curl.se/ca/cacert-2024-07-02.pem.sha256
+	sed -i 's/cacert-.*\.pem/cacert.pem/' cacert.pem.sha256
 
 all_buidls.json:
 	wget -O $@ 'https://dorahacks.io/api/hackathon-buidls/361/?page=1&page_size=1000'

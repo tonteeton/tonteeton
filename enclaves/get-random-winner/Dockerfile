@@ -10,7 +10,7 @@ COPY . .
 # Obtain and verify the integrity of the CA certificate
 RUN set -eux; \
     make clean cacert.pem; \
-    echo "1794c1d4f7055b7d02c2170337b61b48a2ef6c90d77e95444fd2596f4cac609f  cacert.pem" | sha256sum -c -
+    echo "1bf458412568e134a4514f5e170a328d11091e071c7110955c9884ed87972ac9  cacert.pem" | sha256sum -c -
 
 # Build the enclave binary
 RUN ego-go build
