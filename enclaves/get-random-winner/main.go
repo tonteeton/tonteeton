@@ -87,7 +87,7 @@ func watchTransactions(cfg *appconf.Config) error {
 			}
 		}
 		if slices.Contains(comments, "reveal()") {
-			log.Println("raveal() command detected")
+			log.Println("reveal() command detected")
 			err := handlers.RandomReveal(tx)
 			if err != nil {
 				return err

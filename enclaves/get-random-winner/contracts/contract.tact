@@ -11,10 +11,7 @@ contract OracleContract with Deployable, Ownable {
     const contractName: String = "get-random-winner";
     const contractVersion: Int = 1 << 24 | 1 << 16 | 0;
     // Hardcoded event completion time.
-    const eventCompletionTime: Int = 1721685600;
-    // Hard limits for resources.
-    const requestsMaxCount: Int = 128;
-    const gasConsumption: Int = ton("0.03");
+    const eventCompletionTime: Int = 1721772000;
 
     owner: Address;
     newAddress: Address;
@@ -105,10 +102,6 @@ contract OracleContract with Deployable, Ownable {
             name: randomValue.name,
         };
 
-        let sb1: StringBuilder = beginString();
-        sb1.append(revealed.toCell().hash().toString());
-        emit(sb1.toString().asComment());
-
         require(revealed.toCell().hash() == self.randomHash.valueHash.loadUint(256), "Invalid hash for revealed value");
 
         let err : String = self.state.reveal(revealed.doraId, revealed.name);
@@ -142,11 +135,12 @@ contract OracleContract with Deployable, Ownable {
         }
     }
 
+    receive (msg: Slice) {
+    }
+
     fun rock() {
         let err : String = self.state.rock(context().value);
-        if (err == "") {
-            self.sendText(sender(), "🤘");
-        } else {
+        if (err != "") {
             self.reply(err.asComment());
         }
     }
@@ -157,7 +151,6 @@ contract OracleContract with Deployable, Ownable {
             if self.state.changed == stateRoll {
                 emit("random()".asComment());
             }
-            self.sendText(sender(), "⚄");
         } else {
             self.reply(err.asComment());
         }

@@ -95,7 +95,7 @@ func (handlers *Handlers) RandomReveal(tx *tlb.Transaction) error {
 }
 
 func sendResponse(ctx context.Context, senderWallet *wallet.Wallet, address *address.Address, payload *cell.Cell) error {
-	msg := wallet.SimpleMessage(address, tlb.MustFromTON("0.05"), payload)
+	msg := wallet.SimpleMessage(address, tlb.MustFromTON("0.025"), payload)
 
 	tx, _, err := senderWallet.SendWaitTransaction(ctx, msg)
 	if err != nil {

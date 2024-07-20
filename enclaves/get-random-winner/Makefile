@@ -43,10 +43,10 @@ private.pem:
 
 cacert.pem: cacert.pem.sha256
 	# https://curl.se/docs/caextract.html
-	wget -O $@ https://curl.se/ca/cacert-2024-07-02.pem
+	wget -O $@ --no-use-server-timestamps https://curl.se/ca/cacert-2024-07-02.pem
 
 cacert.pem.sha256:
-	wget -O $@ https://curl.se/ca/cacert-2024-07-02.pem.sha256
+	wget -O $@ --no-use-server-timestamps https://curl.se/ca/cacert-2024-07-02.pem.sha256
 	sed -i 's/cacert-.*\.pem/cacert.pem/' cacert.pem.sha256
 
 all_buidls.json:
