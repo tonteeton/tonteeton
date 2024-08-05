@@ -43,10 +43,11 @@ private.pem:
 
 cacert.pem: cacert.pem.sha256
 	# https://curl.se/docs/caextract.html
-	wget https://curl.se/ca/cacert.pem
+	wget -O $@ --no-use-server-timestamps https://curl.se/ca/cacert-2024-03-11.pem
 
 cacert.pem.sha256:
-	wget https://curl.se/ca/cacert.pem.sha256
+	wget -O $@ --no-use-server-timestamps https://curl.se/ca/cacert-2024-03-11.pem.sha256
+	sed -i 's/cacert-.*\.pem/cacert.pem/' cacert.pem.sha256
 
 .PHONY: clean
 clean:
